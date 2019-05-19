@@ -1,0 +1,5 @@
+openapi: 3.0.2
+info:
+  title: Lolesports Api
+  description: Unofficial documentation to the lolesports Api
+  version: 1.0.0
