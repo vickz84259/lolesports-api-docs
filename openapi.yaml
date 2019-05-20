@@ -109,6 +109,12 @@ paths:
                             items:
                               $ref: '#/components/schemas/event'
 
+      security:
+        - apiKeyAuth: []
+
+      servers:
+        - url: *esports-api
+
   /getTournamentsForLeague:
       get:
         operationId: getTournamentsForLeague
