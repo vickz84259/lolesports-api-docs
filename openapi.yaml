@@ -1,4 +1,4 @@
-openapi: 3.0.2
+openapi: 3.0.1
 info:
   title: Lolesports Api
   description: Unofficial documentation to the lolesports Api
@@ -109,6 +109,8 @@ paths:
                             items:
                               $ref: '#/components/schemas/event'
 
+  
+
 components:
   schemas:
     pageToken:
@@ -199,7 +201,7 @@ components:
           minLength: 1
         image:
           type: string
-          minLenth: 1
+          minLength: 1
         name:
           type: string
           minLength: 1
