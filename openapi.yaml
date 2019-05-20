@@ -320,9 +320,12 @@ components:
       in: query
       required: true
       description: |
-        This stipulates the locale.
+        This is the language code as per ISO 639-1
       schema:
         type: string
+        enum: [en-US, en-GB, en-AU, cs-CZ, de-DE, el-GR, es-ES,
+          es-MX, fr-FR, hu-HU, it-IT, pl-PL, pt-BR, ro-RO, ru-RU,
+          tr-TR, ja-JP, ko-KR]
 
     leagueIds:
       name: leagueId
