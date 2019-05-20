@@ -38,7 +38,7 @@ paths:
       operationId: getSchedule
       parameters:
         - $ref: '#/components/parameters/hl'
-        - $ref: '#/components/parameters/leagueId'
+        - $ref: '#/components/parameters/leagueIds'
         - $ref: '#/components/parameters/pageToken'
 
       responses:
@@ -109,7 +109,45 @@ paths:
                             items:
                               $ref: '#/components/schemas/event'
 
-  
+  /getTournamentsForLeague:
+      get:
+        operationId: getTournamentsForLeague
+        parameters:
+          - $ref: '#/components/parameters/hl'
+          - $ref: '#/components/parameters/leagueId'
+
+        responses:
+          '200':
+            description: Successful request
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        leagues:
+                          type: array
+                          description: |
+                            An array of league object(s) where each object contains an array of
+                            tournaments.
+                          items:
+                            type: object
+                            properties:
+                              tournaments:
+                                type: array
+                                description: |
+                                  An array of tournament object(s) where each object describes a
+                                  specific tournament.
+                                items:
+                                  $ref: '#/components/schemas/tournament'
+
+        security:
+          - apiKeyAuth: []
+
+        servers:
+          - url: *esports-api
 
 components:
   schemas:
@@ -253,6 +291,23 @@ components:
         match:
           $ref: '#/components/schemas/match'
 
+    tournament:
+      type: object
+      properties:
+        endDate:
+          type: string
+          description: The date the tournament ends/ended.
+          format: full-date
+        id:
+          type: string
+          description: This is the tournament id
+        slug:
+          type: string
+        startDate:
+          type: string
+          description: The date the tournament starts/started.
+          format: full-date
+
   securitySchemes:
     apiKeyAuth:
       type: apiKey
@@ -269,7 +324,7 @@ components:
       schema:
         type: string
 
-    leagueId:
+    leagueIds:
       name: leagueId
       in: query
       description: |
@@ -278,6 +333,14 @@ components:
         type: array
         items:
           type: number
+
+    leagueId:
+      name: leagueId
+      in: query
+      description: |
+        The id of the league you want details of
+      schema:
+        type: number
 
     pageToken:
       name: pageToken
