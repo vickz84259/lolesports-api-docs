@@ -3,3 +3,70 @@ info:
   title: Lolesports Api
   description: Unofficial documentation to the lolesports Api
   version: 1.0.0
+
+paths:
+  /getLeagues:
+    get:
+      operationId: getLeagues
+      parameters:
+        - name: hl
+          in: query
+          required: true
+          description: |
+            This stipulates the locale.
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      leagues:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              description: The league's ID
+                              type: integer
+                            image:
+                              description: URL to an image of the League's logo
+                              type: string
+                              minLength: 1
+                            name:
+                              description: The league's name
+                              type: string
+                              minLength: 1
+                            priority:
+                              description: Unknown
+                              type: integer
+                            region:
+                              description: |
+                                Indicates which type of tournament the league is. Whether
+                                international or a regional tournament. The region name is
+                                given.
+                              type: string
+                            slug:
+                              description: |
+                                shorthand indentifier of a league.
+                              type: string
+
+      security:
+        - apiKeyAuth: []
+
+      servers:
+        - url: &esports-api https://esports-api.lolesports.com/persisted/gw
+
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
