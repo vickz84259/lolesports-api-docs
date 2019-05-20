@@ -25,32 +25,7 @@ paths:
                       leagues:
                         type: array
                         items:
-                          type: object
-                          properties:
-                            id:
-                              description: The league's ID
-                              type: integer
-                            image:
-                              description: URL to an image of the League's logo
-                              type: string
-                              minLength: 1
-                            name:
-                              description: The league's name
-                              type: string
-                              minLength: 1
-                            priority:
-                              description: Unknown
-                              type: integer
-                            region:
-                              description: |
-                                Indicates which type of tournament the league is. Whether
-                                international or a regional tournament. The region name is
-                                given.
-                              type: string
-                            slug:
-                              description: |
-                                shorthand indentifier of a league.
-                              type: string
+                          $ref: '#/components/schemas/leagueLarge'
 
       security:
         - apiKeyAuth: []
@@ -94,89 +69,45 @@ paths:
                           events:
                             type: array
                             items:
-                              type: object
-                              properties:
-                                startTime:
-                                  type: string
-                                  description: The time the match started
-                                  format: date-time
-                                blockName:
-                                  type: string
-                                  nullable: true
-                                state:
-                                  type: string
-                                  enum: [completed, unstarted]
-                                type:
-                                  type: string
-                                  enum: [match]
-                                league:
-                                  type: object
-                                  properties:
-                                    name:
-                                      type: string
-                                    slug:
-                                      type: string
-                                match:
-                                  type: object
-                                  properties:
-                                    id:
-                                      description: The match id
-                                      type: number
-                                    strategy:
-                                      type: object
-                                      properties:
-                                        type:
-                                          type: string
-                                          enum: [bestOf]
-                                        count:
-                                          type: number
-                                          enum: [1, 3, 5]
-                                    teams:
-                                      type: array
-                                      minItems: 2
-                                      maxItems: 2
-                                      items:
-                                        type: object
-                                        properties:
-                                          code:
-                                            type: string
-                                          image:
-                                            type: string
-                                          name:
-                                            type: string
-                                          record:
-                                            type: object
-                                            description: |
-                                              Describes the amount of wins and losses the team has incurred
-                                              in a particular stage of the tournament specifically group stage
-
-                                              For knockout phase, each series is treated individually.
-                                            properties:
-                                              losses:
-                                                type: number
-                                                minLength: 1
-                                              wins:
-                                                type: number
-                                                minLength: 1
-                                          result:
-                                            type: object
-                                            properties:
-                                              gameWins:
-                                                type: number
-                                                description: |
-                                                  The number of games the team has won in that
-                                                  in the series
-                                                minLength: 1
-                                              outcome:
-                                                type: string
-                                                description: |
-                                                  Indicate whether the team won or lost the series
-                                                enum: [loss, win]
+                              $ref: '#/components/schemas/event'
       security:
         - apiKeyAuth: []
 
       servers:
         - url: *esports-api
+
+  # Need to test if the leagueId and tournamentId work with this endpoint
+  /getLive:
+    get:
+      operationId: getLive
+      parameters:
+        - $ref: '#/components/parameters/hl'
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      schedule:
+                        type: object
+                        properties:
+                          events:
+                            type: array
+                            description: |
+                              Array of event objects representing matches that are
+                              currently ongoing.
+
+                              This will be null if no match is taking place at that
+                              time
+                            nullable: true
+                            items:
+                              $ref: '#/components/schemas/event'
 
 components:
   schemas:
@@ -187,6 +118,138 @@ components:
       type: string
       format: byte
       nullable: true
+
+    leagueSmall:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+
+    leagueLarge:
+      type: object
+      properties:
+        id:
+          description: The league's ID
+          type: integer
+        image:
+          description: URL to an image of the League's logo
+          type: string
+          minLength: 1
+        name:
+          description: The league's name
+          type: string
+          minLength: 1
+        priority:
+          description: Unknown
+          type: integer
+        region:
+          description: |
+            Indicates which type of tournament the league is. Whether
+            international or a regional tournament. The region name is
+            given.
+          type: string
+        slug:
+          description: |
+            shorthand indentifier of a league.
+          type: string
+
+    record:
+      type: object
+      nullable: true
+      description: |
+        Describes the amount of wins and losses the team has incurred
+        in a particular stage of the tournament specifically group stage
+
+        For knockout phase, each series is treated individually.
+
+        This object is null when the match is ongoing
+      properties:
+        losses:
+          type: number
+          minLength: 1
+        wins:
+          type: number
+          minLength: 1
+
+    result:
+      type: object
+      properties:
+        gameWins:
+          type: number
+          description: |
+            The number of games the team has won in that
+            in the series
+          minLength: 1
+        outcome:
+          type: string
+          nullable: true
+          description: |
+            Indicate whether the team won or lost the series
+
+            This will be null if the match is ongoing
+          enum: [loss, win]
+
+    team:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+        image:
+          type: string
+          minLenth: 1
+        name:
+          type: string
+          minLength: 1
+        record:
+          $ref: '#/components/schemas/record'
+        result:
+          $ref: '#/components/schemas/result'
+
+    match:
+      type: object
+      properties:
+        id:
+          description: The match id
+          type: number
+        strategy:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [bestOf]
+            count:
+              type: number
+              enum: [1, 3, 5]
+        teams:
+          type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            $ref: '#/components/schemas/team'
+
+    event:
+      type: object
+      properties:
+        startTime:
+          type: string
+          description: The time the match started
+          format: date-time
+        blockName:
+          type: string
+          nullable: true
+        state:
+          type: string
+          enum: [completed, unstarted, inProgress]
+        type:
+          type: string
+          enum: [match]
+        league:
+          $ref: '#/components/schemas/leagueSmall'
+        match:
+          $ref: '#/components/schemas/match'
 
   securitySchemes:
     apiKeyAuth:
