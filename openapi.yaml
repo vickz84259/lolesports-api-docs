@@ -155,6 +155,42 @@ paths:
         servers:
           - url: *esports-api
 
+  /getStandings:
+    get:
+      operationId: getStandings
+      parameters:
+        - $ref: '#/components/parameters/hl'
+        - $ref: '#/components/parameters/tournamentIds'
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      standings:
+                        type: array
+                        description: |
+                          Each object in the array contains details of each tournament requested.
+                        items:
+                          type: object
+                          properties:
+                            stages:
+                              type: array
+                              items:
+                                $ref: '#/components/schemas/stage'
+
+      security:
+        - apiKeyAuth: []
+
+      servers:
+        - url: *esports-api
+
 components:
   schemas:
     pageToken:
@@ -249,32 +285,34 @@ components:
         name:
           type: string
           minLength: 1
-        record:
-          $ref: '#/components/schemas/record'
-        result:
-          $ref: '#/components/schemas/result'
+
+    strategy:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [bestOf]
+        count:
+          type: number
+          enum: [1, 3, 5]
+
+    teams:
+      type: array
+      minItems: 2
+      maxItems: 2
+      items:
+        $ref: '#/components/schemas/team'
 
     match:
       type: object
       properties:
         id:
           description: The match id
-          type: number
-        strategy:
-          type: object
-          properties:
-            type:
-              type: string
-              enum: [bestOf]
-            count:
-              type: number
-              enum: [1, 3, 5]
-        teams:
-          type: array
-          minItems: 2
-          maxItems: 2
-          items:
-            $ref: '#/components/schemas/team'
+          type: string
+
+    state:
+      type: string
+      enum: [completed, unstarted, inProgress]
 
     event:
       type: object
@@ -287,15 +325,31 @@ components:
           type: string
           nullable: true
         state:
-          type: string
-          enum: [completed, unstarted, inProgress]
+          $ref: '#/components/schemas/state'
         type:
           type: string
           enum: [match]
         league:
           $ref: '#/components/schemas/leagueSmall'
         match:
-          $ref: '#/components/schemas/match'
+          allOf:
+            - $ref: '#/components/schemas/match'
+            - type: object
+              properties:
+                strategy:
+                  $ref: '#/components/schemas/strategy'
+                teams:
+                  allOf:
+                    - $ref: '#/components/schemas/teams'
+                    - type: array
+                      items:
+                        type: object
+                        properties:
+                          record:
+                            $ref: '#/components/schemas/record'
+                          result:
+                            $ref: '#/components/schemas/result'
+
 
     tournament:
       type: object
@@ -313,6 +367,119 @@ components:
           type: string
           description: The date the tournament starts/started.
           format: full-date
+
+    stage:
+      type: object
+      description: |
+        Represents a stage in a tournament.
+
+        Whether it is the group or knockout stage.
+      properties:
+          name:
+            type: string
+            description: The name of that stage of the tournament
+          type:
+            type: string
+            description: The type of the stage.
+            enum: [groups, bracket]
+          slug:
+            type: string
+          sections:
+            type: array
+            description: |
+              Each object in the array represents a particular round in that
+              specific stage in the tournament.
+
+              For the knockout stages, we could have the quarter finals,
+              semi finals and the finals under their own sections.
+
+              For the group stage, there is usually only one section.
+            items:
+              $ref: '#/components/schemas/section'
+
+    section:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the section
+        matches:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/match'
+              - type: object
+                properties:
+                  state:
+                    $ref: '#/components/schemas/state'
+                  previousMatchIds:
+                    type: array
+                    description: |
+                      This stores the previous match ids for the teams in the current
+                      match were involved in.
+
+                      For group stages this is usually null. For bracket stage it is
+                      used to indicate the matches that were played before the match
+                      in question.
+                    nullable: true
+                    items:
+                      type: string
+                  flags:
+                  # Test this to see if it ever contains any other value apart from null
+                    type: string
+                    nullable: true
+                    description: |
+                      The purpose of this key is unknown. So far the only value it
+                      has seems to be null.
+                  teams:
+                    allOf:
+                      - $ref: '#/components/schemas/teams'
+                      - type: array
+                        items:
+                          type: object
+                          properties:
+                            id: &teamId
+                              type: string
+                              description: The team id
+                            slug: &teamSlug
+                              type: string
+                              description: The URL friendly version of the team name
+                            result:
+                              $ref: '#/components/schemas/result'
+        rankings:
+          type: array
+          description: |
+            Contains details about the actual standings for that particular
+            section
+
+            This is mostly used for the group stage. For the knockout stages, it
+            is usually empty.
+          items:
+            $ref: '#/components/schemas/ranking'
+
+    ranking:
+      type: object
+      properties:
+        ordinal:
+          type: number
+          description: The league position
+        teams:
+          type: array
+          description: |
+            The teams that are at that league position.
+
+            In most cases there will only be one team object in this array. In
+            cases where several teams are tied with the same score, this array will
+            contain all teams tied for that position.
+          items:
+            allOf:
+              - $ref: '#/components/schemas/team'
+              - type: object
+                properties:
+                  id: *teamId
+                  slug: *teamSlug
+                  record:
+                    $ref: '#/components/schemas/record'
 
   securitySchemes:
     apiKeyAuth:
@@ -358,3 +525,13 @@ components:
       schema:
         type: string
         format: byte
+
+    tournamentIds:
+      name: tournamentId
+      in: query
+      description: |
+        The id(s) of the tournament(s) you want details ofs
+      schema:
+        type: array
+        items:
+          type: number
