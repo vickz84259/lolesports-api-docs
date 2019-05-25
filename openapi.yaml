@@ -206,36 +206,34 @@ components:
       properties:
         name:
           type: string
+          description: The name of the league
+          minLength: 1
         slug:
           type: string
+          description: URL friendly version of the league's name
+          minLength: 1
 
     leagueLarge:
-      type: object
-      properties:
-        id:
-          description: The league's ID
-          type: integer
-        image:
-          description: URL to an image of the League's logo
-          type: string
-          minLength: 1
-        name:
-          description: The league's name
-          type: string
-          minLength: 1
-        priority:
-          description: Unknown
-          type: integer
-        region:
-          description: |
-            Indicates which type of tournament the league is. Whether
-            international or a regional tournament. The region name is
-            given.
-          type: string
-        slug:
-          description: |
-            shorthand indentifier of a league.
-          type: string
+      allOf:
+        - $ref: '#/components/schemas/leagueSmall'
+        - type: object
+          properties:
+            id:
+              description: The league's ID
+              type: integer
+            image:
+              description: URL to an image of the League's logo
+              type: string
+              minLength: 1
+            priority:
+              description: Unknown
+              type: integer
+            region:
+              description: |
+                Indicates which type of tournament the league is. Whether
+                international or a regional tournament. The region name is
+                given.
+              type: string
 
     record:
       type: object
