@@ -25,7 +25,16 @@ paths:
                       leagues:
                         type: array
                         items:
-                          $ref: '#/components/schemas/leagueLarge'
+                          allOf:
+                            - $ref: '#/components/schemas/leagueLarge'
+                            - type: object
+                              properties:
+                                region:
+                                  description: |
+                                    Indicates which type of tournament the league is. Whether
+                                    international or a regional tournament. The region name is
+                                    given.
+                                  type: string
 
       security:
         - apiKeyAuth: []
@@ -69,7 +78,12 @@ paths:
                           events:
                             type: array
                             items:
-                              $ref: '#/components/schemas/event'
+                              allOf:
+                                - $ref: '#/components/schemas/event'
+                                - type: object
+                                  properties:
+                                    league:
+                                      $ref: '#/components/schemas/leagueSmall'
       security:
         - apiKeyAuth: []
 
@@ -107,7 +121,24 @@ paths:
                               time
                             nullable: true
                             items:
-                              $ref: '#/components/schemas/event'
+                              allOf:
+                                - $ref: '#/components/schemas/event'
+                                - type: object
+                                  properties:
+                                    id:
+                                      type: string
+                                    league:
+                                      $ref: '#/components/schemas/leagueLarge'
+                                    match:
+                                      type: object
+                                      properties:
+                                        teams:
+                                          type: array
+                                          items:
+                                            type: object
+                                            properties:
+                                              slug:
+                                                type: string
 
       security:
         - apiKeyAuth: []
@@ -228,12 +259,6 @@ components:
             priority:
               description: Unknown
               type: integer
-            region:
-              description: |
-                Indicates which type of tournament the league is. Whether
-                international or a regional tournament. The region name is
-                given.
-              type: string
 
     record:
       type: object
@@ -244,7 +269,8 @@ components:
 
         For knockout phase, each series is treated individually.
 
-        This object is null when the match is ongoing
+        This object is null when the match is ongoing and it is in the
+        knockout stage.
       properties:
         losses:
           type: number
@@ -307,6 +333,8 @@ components:
         id:
           description: The match id
           type: string
+        teams:
+          $ref: '#/components/schemas/teams'
 
     state:
       type: string
@@ -327,8 +355,6 @@ components:
         type:
           type: string
           enum: [match]
-        league:
-          $ref: '#/components/schemas/leagueSmall'
         match:
           allOf:
             - $ref: '#/components/schemas/match'
@@ -337,17 +363,14 @@ components:
                 strategy:
                   $ref: '#/components/schemas/strategy'
                 teams:
-                  allOf:
-                    - $ref: '#/components/schemas/teams'
-                    - type: array
-                      items:
-                        type: object
-                        properties:
-                          record:
-                            $ref: '#/components/schemas/record'
-                          result:
-                            $ref: '#/components/schemas/result'
-
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      record:
+                        $ref: '#/components/schemas/record'
+                      result:
+                        $ref: '#/components/schemas/result'
 
     tournament:
       type: object
@@ -430,20 +453,18 @@ components:
                       The purpose of this key is unknown. So far the only value it
                       has seems to be null.
                   teams:
-                    allOf:
-                      - $ref: '#/components/schemas/teams'
-                      - type: array
-                        items:
-                          type: object
-                          properties:
-                            id: &teamId
-                              type: string
-                              description: The team id
-                            slug: &teamSlug
-                              type: string
-                              description: The URL friendly version of the team name
-                            result:
-                              $ref: '#/components/schemas/result'
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: &teamId
+                          type: string
+                          description: The team id
+                        slug: &teamSlug
+                          type: string
+                          description: The URL friendly version of the team name
+                        result:
+                          $ref: '#/components/schemas/result'
         rankings:
           type: array
           description: |
