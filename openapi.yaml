@@ -80,10 +80,27 @@ paths:
                             items:
                               allOf:
                                 - $ref: '#/components/schemas/event'
+                                - $ref: '#/components/schemas/eventSmall'
                                 - type: object
                                   properties:
                                     league:
                                       $ref: '#/components/schemas/leagueSmall'
+                                    match:
+                                      type: object
+                                      properties:
+                                        teams:
+                                          type: array
+                                          items:
+                                            type: object
+                                            properties:
+                                              record:
+                                                $ref: '#/components/schemas/record'
+                                              result:
+                                                type: object
+                                                properties:
+                                                  outcome:
+                                                    $ref: '#/components/schemas/outcome'
+
       security:
         - apiKeyAuth: []
 
@@ -123,6 +140,7 @@ paths:
                             items:
                               allOf:
                                 - $ref: '#/components/schemas/event'
+                                - $ref: '#/components/schemas/eventSmall'
                                 - type: object
                                   properties:
                                     id:
@@ -139,6 +157,13 @@ paths:
                                             properties:
                                               slug:
                                                 type: string
+                                              record:
+                                                $ref: '#/components/schemas/record'
+                                              result:
+                                                type: object
+                                                properties:
+                                                  outcome:
+                                                    $ref: '#/components/schemas/outcome'
 
       security:
         - apiKeyAuth: []
@@ -222,6 +247,51 @@ paths:
       servers:
         - url: *esports-api
 
+  /getCompletedEvents:
+    get:
+      operationId: getCompletedEvents
+      parameters:
+        - $ref: '#/components/parameters/hl'
+        - $ref: '#/components/parameters/tournamentIds'
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      schedule:
+                        type: object
+                        properties:
+                          events:
+                            type: array
+                            items:
+                              allOf:
+                                - $ref: '#/components/schemas/event'
+                                - type: object
+                                  properties:
+                                    games:
+                                      type: array
+                                      items:
+                                        $ref: '#/components/schemas/game'
+                                    match:
+                                      type: object
+                                      properties:
+                                        type:
+                                          type: string
+                                          enum: [normal]
+
+      security:
+        - apiKeyAuth: []
+
+      servers:
+        - url: *esports-api
+
 components:
   schemas:
     pageToken:
@@ -288,14 +358,15 @@ components:
             The number of games the team has won in that
             in the series
           minLength: 1
-        outcome:
-          type: string
-          nullable: true
-          description: |
-            Indicate whether the team won or lost the series
 
-            This will be null if the match is ongoing
-          enum: [loss, win]
+    outcome:
+      type: string
+      nullable: true
+      description: |
+        Indicate whether the team won or lost the series
+
+        This will be null if the match is ongoing
+      enum: [loss, win]
 
     team:
       type: object
@@ -350,11 +421,6 @@ components:
         blockName:
           type: string
           nullable: true
-        state:
-          $ref: '#/components/schemas/state'
-        type:
-          type: string
-          enum: [match]
         match:
           allOf:
             - $ref: '#/components/schemas/match'
@@ -367,10 +433,17 @@ components:
                   items:
                     type: object
                     properties:
-                      record:
-                        $ref: '#/components/schemas/record'
                       result:
                         $ref: '#/components/schemas/result'
+
+    eventSmall:
+      type: object
+      properties:
+        state:
+          $ref: '#/components/schemas/state'
+        type:
+          type: string
+          enum: [match]
 
     tournament:
       type: object
@@ -499,6 +572,20 @@ components:
                   slug: *teamSlug
                   record:
                     $ref: '#/components/schemas/record'
+
+    game:
+      type: object
+      properties:
+        vods:
+          type: array
+          items:
+            $ref: '#/components/schemas/vod'
+
+    vod:
+      type: object
+      properties:
+        parameter:
+          type: string
 
   securitySchemes:
     apiKeyAuth:
