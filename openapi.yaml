@@ -384,6 +384,35 @@ paths:
       servers:
         - url: *esports-api
 
+  /getGames:
+    get:
+      operationId: getGames
+      parameters:
+        - $ref: '#/components/parameters/hl'
+        - $ref: '#/components/parameters/gameIds'
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      games:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/simpleGame'
+
+      security:
+        - apiKeyAuth: []
+
+      servers:
+        - url: *esports-api
+
 components:
   schemas:
     pageToken:
@@ -746,7 +775,7 @@ components:
           items:
             $ref: '#/components/schemas/vod'
 
-    extendedGame:
+    simpleGame:
       type: object
       properties:
         id:
@@ -758,14 +787,20 @@ components:
           type: number
           description: The number of the game
           enum: [1, 2, 3, 4, 5]
-        teams:
-          type: array
-          items:
-            $ref: '#/components/schemas/customTeam'
         vods:
           type: array
           items:
             $ref: '#/components/schemas/extendedVod'
+
+    extendedGame:
+      allOf:
+        - $ref: '#/components/schemas/simpleGame'
+        - type: object
+          properties:
+            teams:
+              type: array
+              items:
+                $ref: '#/components/schemas/customTeam'
 
     vod:
       type: object
@@ -883,3 +918,15 @@ components:
         type: array
         items:
           type: string
+
+    gameIds:
+      name: id
+      in: query
+      description: |
+        The game Id(s).
+
+        You can input more than one game Id(s).
+      schema:
+        type: array
+        items:
+          type: number
