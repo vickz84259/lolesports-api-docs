@@ -154,7 +154,7 @@ paths:
                                             type: object
                                             properties:
                                               slug:
-                                                type: string
+                                                $ref: '#/components/schemas/teamSlug'
                                               record:
                                                 $ref: '#/components/schemas/record'
                                               result:
@@ -355,6 +355,35 @@ paths:
       servers:
         - url: *esports-api
 
+  /getTeams:
+    get:
+      operationId: getTeams
+      parameters:
+        - $ref: '#/components/parameters/hl'
+        - $ref: '#/components/parameters/teamSlugs'
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      teams:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/extendedTeam'
+
+      security:
+        - apiKeyAuth: []
+
+      servers:
+        - url: *esports-api
+
 components:
   schemas:
     pageToken:
@@ -368,7 +397,7 @@ components:
     baseLeague:
       type: object
       properties:
-        name:
+        name: &leagueName
           type: string
           description: The name of the league
           minLength: 1
@@ -458,6 +487,37 @@ components:
         side:
           type: string
           enum: [blue, red]
+
+    extendedTeam:
+      allOf:
+        - $ref: '#/components/schemas/team'
+        - type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/teamId'
+            slug:
+              $ref: '#/components/schemas/teamSlug'
+            alternativeImage:
+              type: string
+              minLength: 1
+            homeLeague:
+              $ref: '#/components/schemas/homeLeague'
+            players:
+              type: array
+              items:
+                $ref: '#/components/schemas/player'
+
+    homeLeague:
+      type: object
+      properties:
+        name: *leagueName
+        region:
+          type: string
+          description: The region where the league is located
+
+    teamSlug:
+      type: string
+      description: The URL friendly version of the team name
 
     teamId:
       type: string
@@ -637,9 +697,8 @@ components:
                       properties:
                         id:
                           $ref: '#/components/schemas/teamId'
-                        slug: &teamSlug
-                          type: string
-                          description: The URL friendly version of the team name
+                        slug:
+                          $ref: '#/components/schemas/teamSlug'
                         result:
                           $ref: '#/components/schemas/result'
         rankings:
@@ -674,7 +733,8 @@ components:
                 properties:
                   id:
                     $ref: '#/components/schemas/teamId'
-                  slug: *teamSlug
+                  slug:
+                    $ref: '#/components/schemas/teamSlug'
                   record:
                     $ref: '#/components/schemas/record'
 
@@ -737,6 +797,22 @@ components:
         es-MX, fr-FR, hu-HU, it-IT, pl-PL, pt-BR, ro-RO, ru-RU,
         tr-TR, ja-JP, ko-KR]
 
+    player:
+      type: object
+      properties:
+        id:
+          type: string
+        summonerName:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        image:
+          type: string
+        role:
+          type: string
+
   securitySchemes:
     apiKeyAuth:
       type: apiKey
@@ -795,3 +871,15 @@ components:
         The id of the match that you want
       schema:
         type: number
+
+    teamSlugs:
+      name: id
+      in: query
+      description: |
+        The team slug(s).
+
+        You can input more than one slug.
+      schema:
+        type: array
+        items:
+          type: string
