@@ -290,6 +290,71 @@ paths:
       servers:
         - url: *esports-api
 
+  /getEventDetails:
+    get:
+      operationId: getEventDetails
+      parameters:
+        - $ref: '#/components/parameters/hl'
+        - $ref: '#/components/parameters/id'
+
+      responses:
+        '200':
+          description: Succesful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      event:
+                        allOf:
+                          - $ref: '#/components/schemas/baseEvent'
+                          - type: object
+                            properties:
+                              id:
+                                type: string
+                              type:
+                                $ref: '#/components/schemas/eventType'
+                              league:
+                                $ref: '#/components/schemas/simpleLeague'
+                              match:
+                                type: object
+                                properties:
+                                  games:
+                                    type: array
+                                    items:
+                                      $ref: '#/components/schemas/extendedGame'
+                                  strategy:
+                                    $ref: '#/components/schemas/baseStrategy'
+                                  teams:
+                                    type: array
+                                    minItems: 2
+                                    maxItems: 2
+                                    items:
+                                      type: object
+                                      properties:
+                                        id:
+                                          $ref: '#/components/schemas/teamId'
+                                        result:
+                                          $ref: '#/components/schemas/result'
+                              streams:
+                                type: array
+                                nullable: true
+                                description: |
+                                  For a live match this will contain information about various streams,
+                                  the platforms they are on and the locale.
+
+                                  Otherwise it will be null.
+                                items:
+                                  $ref: '#/components/schemas/extendedVod'
+      security:
+        - apiKeyAuth: []
+
+      servers:
+        - url: *esports-api
+
 components:
   schemas:
     pageToken:
@@ -312,7 +377,7 @@ components:
           description: URL friendly version of the league's name
           minLength: 1
 
-    extendedLeague:
+    simpleLeague:
       allOf:
         - $ref: '#/components/schemas/baseLeague'
         - type: object
@@ -324,6 +389,12 @@ components:
               description: URL to an image of the League's logo
               type: string
               minLength: 1
+
+    extendedLeague:
+      allOf:
+        - $ref: '#/components/schemas/simpleLeague'
+        - type: object
+          properties:
             priority:
               description: Unknown
               type: integer
@@ -379,15 +450,34 @@ components:
           type: string
           minLength: 1
 
-    strategy:
+    customTeam:
       type: object
       properties:
-        type:
+        id:
+          $ref: '#/components/schemas/teamId'
+        side:
           type: string
-          enum: [bestOf]
+          enum: [blue, red]
+
+    teamId:
+      type: string
+      description: The team id
+
+    baseStrategy:
+      type: object
+      properties:
         count:
           type: number
           enum: [1, 3, 5]
+
+    strategy:
+      allOf:
+        - $ref: '#/components/schemas/baseStrategy'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [bestOf]
 
     teams:
       type: array
@@ -545,9 +635,8 @@ components:
                     items:
                       type: object
                       properties:
-                        id: &teamId
-                          type: string
-                          description: The team id
+                        id:
+                          $ref: '#/components/schemas/teamId'
                         slug: &teamSlug
                           type: string
                           description: The URL friendly version of the team name
@@ -583,7 +672,8 @@ components:
               - $ref: '#/components/schemas/team'
               - type: object
                 properties:
-                  id: *teamId
+                  id:
+                    $ref: '#/components/schemas/teamId'
                   slug: *teamSlug
                   record:
                     $ref: '#/components/schemas/record'
@@ -596,11 +686,56 @@ components:
           items:
             $ref: '#/components/schemas/vod'
 
+    extendedGame:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The game ID
+        state:
+          $ref: '#/components/schemas/state'
+        number:
+          type: number
+          description: The number of the game
+          enum: [1, 2, 3, 4, 5]
+        teams:
+          type: array
+          items:
+            $ref: '#/components/schemas/customTeam'
+        vods:
+          type: array
+          items:
+            $ref: '#/components/schemas/extendedVod'
+
     vod:
       type: object
       properties:
         parameter:
           type: string
+
+    extendedVod:
+      allOf:
+        - $ref: '#/components/schemas/vod'
+        - type: object
+          properties:
+            locale:
+              $ref: '#/components/schemas/locale'
+            provider:
+              type: string
+              description: |
+                The platform that is hosting the vod
+              enum: [youtube, twitch]
+            offset:
+              type: number
+              description: Purpose Unknown
+
+    locale:
+      type: string
+      description: |
+        This is the locale or language code as per ISO 639-1
+      enum: [en-US, en-GB, en-AU, cs-CZ, de-DE, el-GR, es-ES,
+        es-MX, fr-FR, hu-HU, it-IT, pl-PL, pt-BR, ro-RO, ru-RU,
+        tr-TR, ja-JP, ko-KR]
 
   securitySchemes:
     apiKeyAuth:
@@ -613,13 +748,8 @@ components:
       name: hl
       in: query
       required: true
-      description: |
-        This is the language code as per ISO 639-1
       schema:
-        type: string
-        enum: [en-US, en-GB, en-AU, cs-CZ, de-DE, el-GR, es-ES,
-          es-MX, fr-FR, hu-HU, it-IT, pl-PL, pt-BR, ro-RO, ru-RU,
-          tr-TR, ja-JP, ko-KR]
+        $ref: '#/components/schemas/locale'
 
     leagueIds:
       name: leagueId
@@ -656,3 +786,12 @@ components:
         type: array
         items:
           type: number
+
+    id:
+      name: id
+      in: query
+      required: true
+      description: |
+        The id of the match that you want
+      schema:
+        type: number
