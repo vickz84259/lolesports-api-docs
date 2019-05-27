@@ -79,8 +79,7 @@ paths:
                             type: array
                             items:
                               allOf:
-                                - $ref: '#/components/schemas/event'
-                                - $ref: '#/components/schemas/eventSmall'
+                                - $ref: '#/components/schemas/extendedEvent'
                                 - type: object
                                   properties:
                                     league:
@@ -139,8 +138,7 @@ paths:
                             nullable: true
                             items:
                               allOf:
-                                - $ref: '#/components/schemas/event'
-                                - $ref: '#/components/schemas/eventSmall'
+                                - $ref: '#/components/schemas/extendedEvent'
                                 - type: object
                                   properties:
                                     id:
@@ -272,7 +270,7 @@ paths:
                             type: array
                             items:
                               allOf:
-                                - $ref: '#/components/schemas/event'
+                                - $ref: '#/components/schemas/simpleEvent'
                                 - type: object
                                   properties:
                                     games:
@@ -398,20 +396,36 @@ components:
       items:
         $ref: '#/components/schemas/team'
 
-    match:
+    baseMatch:
       type: object
       properties:
-        id:
-          description: The match id
-          type: string
         teams:
           $ref: '#/components/schemas/teams'
+
+    simpleMatch:
+      allOf:
+        - $ref: '#/components/schemas/baseMatch'
+        - type: object
+          properties:
+            id:
+              description: The match id
+              type: string
 
     state:
       type: string
       enum: [completed, unstarted, inProgress]
 
-    event:
+    eventType:
+      type: string
+      enum: [match]
+
+    baseEvent:
+      type: object
+      properties:
+        match:
+          $ref: '#/components/schemas/baseMatch'
+
+    simpleEvent:
       type: object
       properties:
         startTime:
@@ -423,7 +437,7 @@ components:
           nullable: true
         match:
           allOf:
-            - $ref: '#/components/schemas/match'
+            - $ref: '#/components/schemas/simpleMatch'
             - type: object
               properties:
                 strategy:
@@ -436,14 +450,15 @@ components:
                       result:
                         $ref: '#/components/schemas/result'
 
-    eventSmall:
-      type: object
-      properties:
-        state:
-          $ref: '#/components/schemas/state'
-        type:
-          type: string
-          enum: [match]
+    extendedEvent:
+      allOf:
+        - $ref: '#/components/schemas/simpleEvent'
+        - type: object
+          properties:
+            state:
+              $ref: '#/components/schemas/state'
+            type:
+              $ref: '#/components/schemas/eventType'
 
     tournament:
       type: object
@@ -501,7 +516,7 @@ components:
           type: array
           items:
             allOf:
-              - $ref: '#/components/schemas/match'
+              - $ref: '#/components/schemas/simpleMatch'
               - type: object
                 properties:
                   state:
