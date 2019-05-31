@@ -406,6 +406,24 @@ paths:
 
       servers: *esports-api-servers
 
+  /window/{gameId}:
+    get:
+      operationId: getWindow
+      parameters:
+        - $ref: '#/components/parameters/pathGameId'
+        - $ref: '#/components/parameters/startingTime'
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/window'
+
+      servers:
+        - url: https://feed.lolesports.com/livestats/v1
+
 components:
   schemas:
     pageToken:
@@ -841,6 +859,131 @@ components:
         role:
           type: string
 
+    window:
+      type: object
+      properties:
+        esportsGameId:
+          type: string
+          description: The game Id of the match
+        esportsMatchId:
+          type: string
+          description: The match Id of the match
+        gameMetadata:
+          $ref: '#/components/schemas/gameMetadata'
+        frames:
+          type: array
+          items:
+            $ref: '#/components/schemas/frame'
+
+    gameMetadata:
+      type: object
+      properties:
+        patchVersion:
+          type: string
+          description: The patch the match was played on
+        blueTeamMetadata:
+          $ref: '#/components/schemas/teamMetadata'
+        redTeamMetadata:
+          $ref: '#/components/schemas/teamMetadata'
+
+    teamMetadata:
+      type: object
+      properties:
+        esportsTeamId:
+          type: string
+          description: The team Id
+        participantMetadata:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/participantMetadata'
+              - $ref: '#/components/schemas/participantMetadataExtended'
+
+    participantMetadata:
+      type: object
+      properties:
+        participantId:
+          $ref: '#/components/schemas/participantId'
+        summonerName:
+          type: string
+        championId:
+          type: string
+        role:
+          type: string
+          enum: [top, jungle, mid, bottom, support]
+
+    participantMetadataExtended:
+      allOf:
+        - $ref: '#/components/schemas/participantMetadata'
+        - type: object
+          properties:
+            esportsPlayerId:
+              type: string
+
+    participantId:
+      type: number
+      enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+    frame:
+      type: object
+      properties:
+        rfc460Timestamp:
+          type: string
+          format: date-time
+        gameState:
+          type: string
+          enum: [in_game, finished]
+        blueTeam:
+          $ref: '#/components/schemas/teamStats'
+        redTeam:
+          $ref: '#/components/schemas/teamStats'
+
+    teamStats:
+      type: object
+      properties:
+        totalGold:
+          type: number
+        inhibitors:
+          type: number
+        towers:
+          type: number
+        barons:
+          type: number
+        totalKills:
+          type: number
+        dragons:
+          type: array
+          items:
+            type: string
+            enum: [ocean, mountain, infernal, cloud, elder]
+        participants:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/participantStats'
+
+    participantStats:
+      type: object
+      properties:
+        participantId:
+          $ref: '#/components/schemas/participantId'
+        totalGold:
+          type: number
+        level:
+          type: number
+        kills:
+          type: number
+        deaths:
+          type: number
+        assists:
+          type: number
+        creepScore:
+          type: number
+        currentHealth:
+          type: number
+        maxHealth:
+          type: number
+
   securitySchemes:
     apiKeyAuth:
       type: apiKey
@@ -923,3 +1066,21 @@ components:
         type: array
         items:
           type: number
+
+    pathGameId:
+      name: gameId
+      in: path
+      required: true
+      description: |
+        The game id of the match
+      schema:
+        type: number
+
+    startingTime:
+      name: startingTime
+      in: query
+      description: |
+        The date-time (RFC3339)
+      schema:
+        type: string
+        format: date-time
