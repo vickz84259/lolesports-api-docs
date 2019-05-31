@@ -39,8 +39,9 @@ paths:
       security:
         - apiKeyAuth: []
 
-      servers:
-        - url: &esports-api https://esports-api.lolesports.com/persisted/gw
+      servers: &esports-api-servers
+        - url: https://esports-api.lolesports.com/persisted/gw
+        - url: https://prod-relapi.ewp.gg/persisted/gw
 
   /getSchedule:
     get:
@@ -103,8 +104,7 @@ paths:
       security:
         - apiKeyAuth: []
 
-      servers:
-        - url: *esports-api
+      servers: *esports-api-servers
 
   # Need to test if the leagueId and tournamentId work with this endpoint
   /getLive:
@@ -166,8 +166,7 @@ paths:
       security:
         - apiKeyAuth: []
 
-      servers:
-        - url: *esports-api
+      servers: *esports-api-servers
 
   /getTournamentsForLeague:
       get:
@@ -206,8 +205,7 @@ paths:
         security:
           - apiKeyAuth: []
 
-        servers:
-          - url: *esports-api
+        servers: *esports-api-servers
 
   /getStandings:
     get:
@@ -242,8 +240,7 @@ paths:
       security:
         - apiKeyAuth: []
 
-      servers:
-        - url: *esports-api
+      servers: *esports-api-servers
 
   /getCompletedEvents:
     get:
@@ -287,8 +284,7 @@ paths:
       security:
         - apiKeyAuth: []
 
-      servers:
-        - url: *esports-api
+      servers: *esports-api-servers
 
   /getEventDetails:
     get:
@@ -352,8 +348,7 @@ paths:
       security:
         - apiKeyAuth: []
 
-      servers:
-        - url: *esports-api
+      servers: *esports-api-servers
 
   /getTeams:
     get:
@@ -381,8 +376,7 @@ paths:
       security:
         - apiKeyAuth: []
 
-      servers:
-        - url: *esports-api
+      servers: *esports-api-servers
 
   /getGames:
     get:
@@ -410,8 +404,7 @@ paths:
       security:
         - apiKeyAuth: []
 
-      servers:
-        - url: *esports-api
+      servers: *esports-api-servers
 
 components:
   schemas:
