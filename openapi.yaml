@@ -482,7 +482,7 @@ components:
           properties:
             id:
               description: The league's ID
-              type: integer
+              type: string
             image:
               description: URL to an image of the League's logo
               type: string
@@ -510,17 +510,17 @@ components:
         knockout stage.
       properties:
         losses:
-          type: number
+          type: integer
           minLength: 1
         wins:
-          type: number
+          type: integer
           minLength: 1
 
     result:
       type: object
       properties:
         gameWins:
-          type: number
+          type: integer
           description: |
             The number of games the team has won in that
             in the series
@@ -596,7 +596,7 @@ components:
       type: object
       properties:
         count:
-          type: number
+          type: integer
           enum: [1, 3, 5]
 
     strategy:
@@ -785,7 +785,7 @@ components:
       type: object
       properties:
         ordinal:
-          type: number
+          type: integer
           description: The league position
         teams:
           type: array
@@ -824,7 +824,7 @@ components:
         state:
           $ref: '#/components/schemas/state'
         number:
-          type: number
+          type: integer
           description: The number of the game
           enum: [1, 2, 3, 4, 5]
         vods:
@@ -861,7 +861,7 @@ components:
                 The platform that is hosting the vod
               enum: [youtube, twitch]
             offset:
-              type: number
+              type: integer
               description: Purpose Unknown
 
     locale:
@@ -950,7 +950,7 @@ components:
               type: string
 
     participantId:
-      type: number
+      type: integer
       enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
     baseFrame:
@@ -992,15 +992,15 @@ components:
       type: object
       properties:
         totalGold:
-          type: number
+          type: integer
         inhibitors:
-          type: number
+          type: integer
         towers:
-          type: number
+          type: integer
         barons:
-          type: number
+          type: integer
         totalKills:
-          type: number
+          type: integer
         dragons:
           type: array
           items:
@@ -1018,15 +1018,15 @@ components:
         participantId:
           $ref: '#/components/schemas/participantId'
         level:
-          type: number
+          type: integer
         kills:
-          type: number
+          type: integer
         deaths:
-          type: number
+          type: integer
         assists:
-          type: number
+          type: integer
         creepScore:
-          type: number
+          type: integer
 
     participantStats:
       allOf:
@@ -1034,11 +1034,11 @@ components:
         - type: object
           properties:
             totalGold:
-              type: number
+              type: integer
             currentHealth:
-              type: number
+              type: integer
             maxHealth:
-              type: number
+              type: integer
 
     extendedParticipantStats:
       allOf:
@@ -1046,7 +1046,7 @@ components:
         - type: object
           properties:
             totalGoldEarned:
-              type: number
+              type: integer
             killParticipation:
               type: number
               format: float
@@ -1054,24 +1054,24 @@ components:
               type: number
               format: float
             wardsPlaced:
-              type: number
+              type: integer
             wardsDestroyed:
-              type: number
+              type: integer
             attackDamage:
-              type: number
+              type: integer
             abilityPower:
-              type: number
+              type: integer
             criticalChance:
               type: number
               format: float
             attackSpeed:
-              type: number
+              type: integer
             lifeSteal:
-              type: number
+              type: integer
             armor:
-              type: number
+              type: integer
             magicResistance:
-              type: number
+              type: integer
             tenacity:
               type: number
               format: float
@@ -1081,7 +1081,7 @@ components:
               description: |
                 Contains the item Ids of the items in the inventory
               items:
-                type: number
+                type: integer
             perkMetadata:
               $ref: '#/components/schemas/perkMetadata'
             abilities:
@@ -1091,12 +1091,12 @@ components:
       type: object
       properties:
         styleId:
-          type: number
+          type: integer
           description: |
             The id of the primary rune path
           enum: [8000, 8100, 8200, 8300, 8400]
         subStyleId:
-          type: number
+          type: integer
           description: |
             The id of the secondary rune path
           enum: [8000, 8100, 8200, 8300, 8400]
@@ -1111,7 +1111,7 @@ components:
             Index 4 - 5 are the ids of the secondary runes
             Index 6 - 8 are the ids of the stats shard
           items:
-            type: number
+            type: integer
 
     abilities:
       type: array
@@ -1144,7 +1144,8 @@ components:
       schema:
         type: array
         items:
-          type: number
+          type: integer
+          format: int64
 
     leagueId:
       name: leagueId
@@ -1152,7 +1153,8 @@ components:
       description: |
         The id of the league you want details of
       schema:
-        type: number
+        type: integer
+        format: int64
 
     pageToken:
       name: pageToken
@@ -1170,7 +1172,8 @@ components:
       schema:
         type: array
         items:
-          type: number
+          type: integer
+          format: int64
 
     id:
       name: id
@@ -1179,7 +1182,8 @@ components:
       description: |
         The id of the match that you want
       schema:
-        type: number
+        type: integer
+        format: int64
 
     teamSlugs:
       name: id
@@ -1203,7 +1207,8 @@ components:
       schema:
         type: array
         items:
-          type: number
+          type: integer
+          format: int64
 
     pathGameId:
       name: gameId
@@ -1212,7 +1217,8 @@ components:
       description: |
         The game id of the match
       schema:
-        type: number
+        type: integer
+        format: int64
 
     startingTime:
       name: startingTime
