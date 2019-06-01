@@ -4,12 +4,37 @@ info:
   description: Unofficial documentation to the lolesports Api
   version: 1.0.0
 
+tags:
+  - name: leagues
+    description: |
+      Get information about a league, the standings and its various tournaments.
+  - name: events
+    description: |
+      Get information about ongoing, completed or upcoming events.
+  - name: teams
+    description: |
+      Get information about a team and its roster.
+  - name: match details
+    description: |
+      Get the full match details of a game either live or after it has occured.
+
+x-tagGroups:
+  - name: Rel Api
+    tags:
+      - leagues
+      - events
+      - teams
+      - match details
+
 paths:
   /getLeagues:
     get:
       operationId: getLeagues
       parameters:
         - $ref: '#/components/parameters/hl'
+
+      tags:
+        - leagues
 
       responses:
         '200':
@@ -50,6 +75,9 @@ paths:
         - $ref: '#/components/parameters/hl'
         - $ref: '#/components/parameters/leagueIds'
         - $ref: '#/components/parameters/pageToken'
+
+      tags:
+        - events
 
       responses:
         '200':
@@ -113,6 +141,9 @@ paths:
       parameters:
         - $ref: '#/components/parameters/hl'
 
+      tags:
+        - events
+
       responses:
         '200':
           description: Successful request
@@ -175,6 +206,9 @@ paths:
           - $ref: '#/components/parameters/hl'
           - $ref: '#/components/parameters/leagueId'
 
+        tags:
+          - leagues
+
         responses:
           '200':
             description: Successful request
@@ -214,6 +248,9 @@ paths:
         - $ref: '#/components/parameters/hl'
         - $ref: '#/components/parameters/tournamentIds'
 
+      tags:
+        - leagues
+
       responses:
         '200':
           description: Successful request
@@ -248,6 +285,9 @@ paths:
       parameters:
         - $ref: '#/components/parameters/hl'
         - $ref: '#/components/parameters/tournamentIds'
+
+      tags:
+        - events
 
       responses:
         '200':
@@ -292,6 +332,9 @@ paths:
       parameters:
         - $ref: '#/components/parameters/hl'
         - $ref: '#/components/parameters/id'
+
+      tags:
+        - events
 
       responses:
         '200':
@@ -357,6 +400,9 @@ paths:
         - $ref: '#/components/parameters/hl'
         - $ref: '#/components/parameters/teamSlugs'
 
+      tags:
+        - teams
+
       responses:
         '200':
           description: Successful request
@@ -384,6 +430,9 @@ paths:
       parameters:
         - $ref: '#/components/parameters/hl'
         - $ref: '#/components/parameters/gameIds'
+
+      tags:
+        - events
 
       responses:
         '200':
@@ -413,6 +462,9 @@ paths:
         - $ref: '#/components/parameters/pathGameId'
         - $ref: '#/components/parameters/startingTime'
 
+      tags:
+        - match details
+
       responses:
         '200':
           description: Successful request
@@ -437,6 +489,9 @@ paths:
           schema:
             type: string
             pattern: '^\d{1,2}(?:_\d{1,2}){0,9}$'
+
+      tags:
+        - match details
 
       responses:
         '200':
