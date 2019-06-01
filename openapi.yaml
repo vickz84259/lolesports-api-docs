@@ -421,8 +421,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/window'
 
-      servers:
+      servers: &livestats-api
         - url: https://feed.lolesports.com/livestats/v1
+
+  /details/{gameId}:
+    get:
+      operationId: getDetails
+      parameters:
+        - $ref: '#/components/parameters/pathGameId'
+        - $ref: '#/components/parameters/startingTime'
+        - name: participantIds
+          in: query
+          description: |
+            A list of the participant Ids separated by underscores and not commas
+          schema:
+            type: string
+            pattern: '^\d{1,2}(?:_\d{1,2}){0,9}$'
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  frames:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/detailsFrame'
+
+      servers: *livestats-api
 
 components:
   schemas:
@@ -873,7 +902,7 @@ components:
         frames:
           type: array
           items:
-            $ref: '#/components/schemas/frame'
+            $ref: '#/components/schemas/windowFrame'
 
     gameMetadata:
       type: object
@@ -924,19 +953,40 @@ components:
       type: number
       enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-    frame:
+    baseFrame:
       type: object
       properties:
         rfc460Timestamp:
           type: string
           format: date-time
-        gameState:
-          type: string
-          enum: [in_game, finished]
-        blueTeam:
-          $ref: '#/components/schemas/teamStats'
-        redTeam:
-          $ref: '#/components/schemas/teamStats'
+
+    windowFrame:
+      allOf:
+        - $ref: '#/components/schemas/baseFrame'
+        - type: object
+          properties:
+            rfc460Timestamp:
+              type: string
+              format: date-time
+            gameState:
+              type: string
+              enum: [in_game, finished]
+            blueTeam:
+              $ref: '#/components/schemas/teamStats'
+            redTeam:
+              $ref: '#/components/schemas/teamStats'
+
+    detailsFrame:
+      allOf:
+        - $ref: '#/components/schemas/baseFrame'
+        - type: object
+          properties:
+            participants:
+              type: array
+              minItems: 1
+              maxItems: 10
+              items:
+                $ref: '#/components/schemas/extendedParticipantStats'
 
     teamStats:
       type: object
@@ -962,13 +1012,11 @@ components:
           items:
             $ref: '#/components/schemas/participantStats'
 
-    participantStats:
+    baseParticipantStats:
       type: object
       properties:
         participantId:
           $ref: '#/components/schemas/participantId'
-        totalGold:
-          type: number
         level:
           type: number
         kills:
@@ -979,10 +1027,100 @@ components:
           type: number
         creepScore:
           type: number
-        currentHealth:
+
+    participantStats:
+      allOf:
+        - $ref: '#/components/schemas/baseParticipantStats'
+        - type: object
+          properties:
+            totalGold:
+              type: number
+            currentHealth:
+              type: number
+            maxHealth:
+              type: number
+
+    extendedParticipantStats:
+      allOf:
+        - $ref: '#/components/schemas/participantStats'
+        - type: object
+          properties:
+            totalGoldEarned:
+              type: number
+            killParticipation:
+              type: number
+              format: float
+            championDamageShare:
+              type: number
+              format: float
+            wardsPlaced:
+              type: number
+            wardsDestroyed:
+              type: number
+            attackDamage:
+              type: number
+            abilityPower:
+              type: number
+            criticalChance:
+              type: number
+              format: float
+            attackSpeed:
+              type: number
+            lifeSteal:
+              type: number
+            armor:
+              type: number
+            magicResistance:
+              type: number
+            tenacity:
+              type: number
+              format: float
+            items:
+              type: array
+              maxItems: 7
+              description: |
+                Contains the item Ids of the items in the inventory
+              items:
+                type: number
+            perkMetadata:
+              $ref: '#/components/schemas/perkMetadata'
+            abilities:
+              $ref: '#/components/schemas/abilities'
+
+    perkMetadata:
+      type: object
+      properties:
+        styleId:
           type: number
-        maxHealth:
+          description: |
+            The id of the primary rune path
+          enum: [8000, 8100, 8200, 8300, 8400]
+        subStyleId:
           type: number
+          description: |
+            The id of the secondary rune path
+          enum: [8000, 8100, 8200, 8300, 8400]
+        perks:
+          type: array
+          minItems: 9
+          maxItems: 9
+          description: |
+            The runes selected.
+
+            Index 0 - 3 are the ids of the primary runes
+            Index 4 - 5 are the ids of the secondary runes
+            Index 6 - 8 are the ids of the stats shard
+          items:
+            type: number
+
+    abilities:
+      type: array
+      description: |
+        Contains the abilities the summoner levelled up at each level
+      maxItems: 18
+      enum: [Q, W, E, R]
+      items:
+        type: string
 
   securitySchemes:
     apiKeyAuth:
