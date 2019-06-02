@@ -597,7 +597,12 @@ components:
               description: |
                 Contains a description of the league translated to various locales.
 
-                The keys are in the ISO 639-1 format. The value is a string containing
+                The keys are presented in the format ([ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1)
+                and [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))
+
+                `{languageCode}_{countryCode}`
+
+                The value is a string containing
                 html tags representing the description in that specific locale.
               minProperties: 0
               additionalProperties:
@@ -607,7 +612,12 @@ components:
               description: |
                 Contains the names of the league translated to various locales.
 
-                The keys are in the ISO 639-1 format. The value is a string containing
+                The keys are presented in the format ([ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1)
+                and [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))
+
+                `{languageCode}_{countryCode}`
+
+                The value is a string containing
                 the name of the league in that specific locale.
               minProperties: 0
               additionalProperties:
@@ -983,7 +993,8 @@ components:
     locale:
       type: string
       description: |
-        This is the locale or language code as per ISO 639-1
+        This is the locale or language code using [ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1)
+        and [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
       enum: [en-US, en-GB, en-AU, cs-CZ, de-DE, el-GR, es-ES,
         es-MX, fr-FR, hu-HU, it-IT, pl-PL, pt-BR, ro-RO, ru-RU,
         tr-TR, ja-JP, ko-KR]
