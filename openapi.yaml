@@ -524,6 +524,37 @@ paths:
       servers: &v1
         - url: https://api.lolesports.com/api/v1
 
+  /videos:
+    get:
+      description: |
+        This endpoint returns details about esports vods on YouTube.
+
+        The data returned by this endpoint is fairly large (more than 5MB) since
+        it includes vods from 2015 up to (at the time of writing this) June 2019
+        and it will continue growing.
+
+        Do consider this when dealing with clients (like mobile phones) where
+        bandwidth and memory may be scarce.
+
+        It is highly advised that you cache the data from this endpoint.
+      operationId: videos
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  videos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/video'
+
+      servers: &v2
+        - url: https://api.lolesports.com/api/v2
+
 components:
   schemas:
     pageToken:
@@ -587,9 +618,11 @@ components:
               type: string
             createdAt: &createdAt
               type: string
+              description: The date and time when this entry was created.
               format: date-time
             updatedAt: &updatedAt
               type: string
+              description: The date and time when this entry was last updated.
               format: date-time
             # Add example to better explain this property
             abouts:
@@ -1275,6 +1308,41 @@ components:
               nullable: true
         createdAt: *createdAt
         updatedAt: *updatedAt
+
+    video:
+      type: object
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+          nullable: true
+        label:
+          type: string
+          nullable: true
+        locale:
+          type: string
+          description: |
+            The video's locale. The value is a [ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1)
+            language code.
+        reference:
+          type: string
+          pattern: '^urn:rg:lolesports:global:highlander:tournament:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):game:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$'
+          description: |
+            Contains the tournament Id and the game Id of that match.
+        source:
+          type: string
+          description: |
+            URL to the YouTube video of the match
+        createdAt: *createdAt
+        updatedAt: *updatedAt
+        game:
+          type: string
+          description: |
+            The game Id of the match.
+
+            It is a [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
 
   securitySchemes:
     apiKeyAuth:
