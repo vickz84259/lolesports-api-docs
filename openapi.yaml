@@ -18,14 +18,6 @@ tags:
     description: |
       Get the full match details of a game either live or after it has occured.
 
-x-tagGroups:
-  - name: Rel Api
-    tags:
-      - leagues
-      - events
-      - teams
-      - match details
-
 paths:
   /getLeagues:
     get:
@@ -508,6 +500,30 @@ paths:
 
       servers: *livestats-api
 
+  /navItems:
+    get:
+      operationId: navItems
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  navItems:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/navItem'
+                  leagues:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/highlanderLeague'
+
+      servers: &v1
+        - url: https://api.lolesports.com/api/v1
+
 components:
   schemas:
     pageToken:
@@ -551,6 +567,51 @@ components:
             priority:
               description: Unknown
               type: integer
+
+    highlanderLeague:
+      allOf:
+        - $ref: '#/components/schemas/baseLeague'
+        - type: object
+          properties:
+            id:
+              description: The league's ID
+              type: integer
+            guid:
+              type: string
+            region:
+              type: string
+            drupalId:
+              type: integer
+              nullable: true
+            logoUrl:
+              type: string
+            createdAt: &createdAt
+              type: string
+              format: date-time
+            updatedAt: &updatedAt
+              type: string
+              format: date-time
+            # Add example to better explain this property
+            abouts:
+              type: object
+              description: |
+                Contains a description of the league translated to various locales.
+
+                The keys are in the ISO 639-1 format. The value is a string containing
+                html tags representing the description in that specific locale.
+              minProperties: 0
+              additionalProperties:
+                type: string
+            names:
+              type: object
+              description: |
+                Contains the names of the league translated to various locales.
+
+                The keys are in the ISO 639-1 format. The value is a string containing
+                the name of the league in that specific locale.
+              minProperties: 0
+              additionalProperties:
+                type: string
 
     record:
       type: object
@@ -1176,6 +1237,33 @@ components:
       enum: [Q, W, E, R]
       items:
         type: string
+
+    navItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        link:
+          type: string
+        slug:
+          type: string
+          nullable: true
+        label:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        order:
+          type: integer
+        external:
+          type: boolean
+        parentNavItem:
+          allOf:
+            - $ref: '#/components/schemas/navItem'
+            - type: object
+              nullable: true
+        createdAt: *createdAt
+        updatedAt: *updatedAt
 
   securitySchemes:
     apiKeyAuth:
