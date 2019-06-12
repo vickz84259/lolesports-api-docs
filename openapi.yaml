@@ -558,6 +558,8 @@ paths:
   /highlanderTournaments:
     get:
       operationId: highlanderTournaments
+      description: |
+        If a league does not have highlanderTournament objects, the API will return 404
 
       responses:
         '200':
@@ -566,6 +568,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/highlanderTournaments'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error:
+                    type: object
+                    required: [statusCode, message]
+                    properties:
+                      statusCode:
+                        type: integer
+                        enum: [404]
+                      message:
+                        type: string
+                        pattern: ^404 - http:\/\/highlander\.lolesports\.com\/v1\/leagues\/\d+$
 
       servers: *v2
 
