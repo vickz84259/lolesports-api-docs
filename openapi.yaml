@@ -555,6 +555,20 @@ paths:
       servers: &v2
         - url: https://api.lolesports.com/api/v2
 
+  /highlanderTournaments:
+    get:
+      operationId: highlanderTournaments
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/highlanderTournaments'
+
+      servers: *v2
+
 components:
   schemas:
     pageToken:
@@ -1337,12 +1351,539 @@ components:
         createdAt: *createdAt
         updatedAt: *updatedAt
         game:
+          $ref: '#/components/schemas/gameId'
+
+    gameId:
+      type: string
+      description: |
+        The game Id of the match.
+
+        It is a [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+      pattern: &uuidRegex '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+
+    highlanderTournaments:
+      type: array
+      items:
+        $ref: '#/components/schemas/highlanderTournament'
+
+    highlanderTournament:
+      type: object
+      required: [id, title, description, leagueReference, roles, queues, published, rosters,
+        brackets, liveMatches, startDate, endDate, platformIds, gameIds,
+        leagueId, league]
+      properties:
+        id:
           type: string
+          pattern: *uuidRegex
           description: |
-            The game Id of the match.
+            The tournament Id
 
             It is a [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
-          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+        title:
+          type: string
+          description: URL friendly version of the tournament name
+        description:
+          type: string
+          description: The tournament's name
+        leagueReference:
+          type: string
+          pattern: '^urn:rg:lolesports:global:league:league:\d+$'
+          description: The integer in the string represents the league ID.
+        roles:
+          $ref: '#/components/schemas/roles'
+        bracketType:
+          $ref: '#/components/schemas/bracketType'
+        matchType:
+          $ref: '#/components/schemas/matchType'
+        rosteringStrategy:
+          $ref: '#/components/schemas/rosteringStrategy'
+        seedingStrategy:
+          $ref: '#/components/schemas/rosteringStrategy'
+        queues:
+          type: object
+          minProperties: 0
+        rosters:
+          type: object
+          description: |
+            The keys to this object are [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+            representing the roster ID.
+
+            Their values are objects but they don't contain anything useful about the roster.
+          additionalProperties:
+            type: object
+            required: [id, name, roles, teamReference, substitutions, team]
+            properties:
+              id:
+                type: string
+                pattern: *uuidRegex
+                description: |
+                  The roster ID.
+
+                  It is a [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+              state:
+                type: string
+                enum: [eliminated]
+              name:
+                type: string
+                description: The abbreviated version of the team's name.
+              roles:
+                type: object
+                minProperties: 0
+              teamReference:
+                type: string
+                pattern: '^urn:rg:lolesports:global:team:team:\d+$'
+              substitutions:
+                type: object
+                minProperties: 0
+              team:
+                type: string
+                pattern: '^\d+$'
+                description: The Team ID
+        published:
+          type: boolean
+          enum: [true, false]
+          description: |
+            If the value is true then the league/tournament has concluded, otherwise it is ongoing.
+        breakpoints:
+          $ref: '#/components/schemas/breakpoints'
+        brackets:
+          $ref: '#/components/schemas/brackets'
+        standings:
+          $ref: '#/components/schemas/standings'
+        liveMatches:
+          type: array
+          description: |
+            The array contains [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier) Match IDs
+
+            Despite the name of this property it is unreliable as for some tournaments this array will
+            contain match IDs yet the matches are over.
+          items:
+            type: string
+            pattern: *uuidRegex
+        startDate:
+          type: string
+          description: The day the tournament starts/started.
+          format: date
+        endDate:
+          type: string
+          description: The day the tournament ends/ended.
+          format: date
+        platformIds:
+          type: array
+          description: |
+            Contains all the platform IDs in for this tournaments.
+
+            A platform ID is combination of the gameRealm and the gameId.
+            The regex below describes the format.
+
+            `^[A-Z]+\d+:\d+$`
+          items:
+            type: string
+        gameIds:
+          type: array
+          description: |
+            'Contains all the gameIds in this tournament.
+
+            **Note:** The gameIds are in the format [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)'
+          items:
+            type: string
+        leagueId:
+          type: string
+          description: The league ID
+          pattern: '^\d+$'
+        league:
+          type: string
+          description: The league ID
+          pattern: '^\d+$'
+
+    rosteringStrategy:
+      type: object
+      required: [identifier]
+      properties:
+        identifier:
+          type: string
+          enum: [passthru, random]
+
+    roles:
+      type: object
+      required: [creator, owner]
+      properties:
+        creator: &roleArray
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/role'
+        owner: *roleArray
+
+    role:
+      type: object
+      required: [origin, region, summonerName, summonerLevel, profileIconId, admin]
+      properties:
+        origin:
+          type: string
+          enum: [BEARER_TOKEN]
+        region:
+          type: string
+          enum: [global]
+        summonerName:
+          type: string
+          enum: [test-user]
+        summonerLevel:
+          type: integer
+          enum: [0]
+        profileIconId:
+          type: integer
+          enum: [0]
+        admin:
+          type: boolean
+          enum: [true]
+
+    simpleRoster:
+      type: object
+      properties:
+        roster:
+          type: string
+          pattern: *uuidRegex
+          description: The roster ID
+
+    breakpoints:
+    # Give more information on this....
+      type: object
+      description: |
+        The keys to this object are [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+        representing the roster ID.
+      additionalProperties:
+        type: object
+        required: [id, name, position, input, scores, roles, generator]
+        properties:
+          id:
+            type: string
+            pattern: *uuidRegex
+            description: The breakpoint's ID
+          name:
+            type: string
+          position:
+            type: integer
+          input:
+            type: array
+            items:
+              allOf:
+                - $ref: '#/components/schemas/simpleRoster'
+                - type: object
+                  properties:
+                    bracket:
+                      type: string
+                      pattern: *uuidRegex
+                      description: The bracket ID
+                    standing:
+                      type: integer
+          standings:
+            $ref: '#/components/schemas/standings'
+          scores:
+            $ref: '#/components/schemas/scores'
+          roles:
+            $ref: '#/components/schemas/roles'
+          generator:
+            type: object
+            properties:
+              identifier:
+                type: string
+                enum: [noop]
+
+    standings:
+      type: object
+      required: [result, timestamp, closed]
+      properties:
+        result:
+          $ref: '#/components/schemas/highlanderResult'
+        timestamp:
+          type: integer
+          description: Unix timestamp
+        source:
+          type: string
+          enum: [manual, bestOf]
+          description: How the record was created/updated.
+        note:
+          type: string
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/standings'
+        closed:
+          type: boolean
+          description: |
+            If the value is true then the league/tournament has concluded, otherwise it is ongoing.
+          enum: [true, false]
+
+    highlanderResult:
+      type: array
+      items:
+        type: array
+        items:
+          $ref: '#/components/schemas/simpleRoster'
+
+    brackets:
+      type: object
+      description: |
+        The keys to this object are [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+        representing the bracket ID.
+      additionalProperties:
+        type: object
+        required: [id, name, position, groupPosition, canManufacture, state,
+          matches, roles, scores, matchScores]
+        properties:
+          id:
+            type: string
+            pattern: *uuidRegex
+            description: The bracket ID.
+          name:
+            type: string
+            description: The name of the bracket
+          position:
+            type: integer
+          groupPosition:
+            type: integer
+          groupName:
+            type: string
+          canManufacture:
+            type: boolean
+          state: &highlanderState
+            type: string
+            enum: [resolved, unresolved, unlinked]
+            description: |
+              Whether it is ongoing or completed.
+
+              This is unreliable since some tournaments have the state unresolved yet they concluded
+              a long time ago.
+          bracketType:
+            $ref: '#/components/schemas/bracketType'
+          matchType:
+            $ref: '#/components/schemas/matchType'
+          gameMode:
+            $ref: '#/components/schemas/gameMode'
+          input:
+            type: array
+            items:
+              allOf:
+                - $ref: '#/components/schemas/simpleRoster'
+                - type: object
+                  properties:
+                    breakpoint:
+                      type: string
+                      pattern: *uuidRegex
+                      description: The breakpoint ID
+                    standing:
+                      type: integer
+          matches:
+            type: object
+            description: |
+              The keys to this object are [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+              representing the match ID.
+            additionalProperties:
+              $ref: '#/components/schemas/highlanderMatch'
+          standings:
+            $ref: '#/components/schemas/standings'
+          inheritableMatchScoringStrategy:
+            $ref: '#/components/schemas/scoring'
+          roles:
+            $ref: '#/components/schemas/roles'
+          scoring:
+            $ref: '#/components/schemas/scoring'
+          scores:
+            $ref: '#/components/schemas/scores'
+          matchScoring:
+            $ref: '#/components/schemas/scoring'
+          matchScores:
+            $ref: '#/components/schemas/scores'
+
+    bracketType:
+      type: object
+      required: [identifier]
+      properties:
+        identifier:
+          type: string
+          enum: [round_robin, single_elim, gauntlet, bestOf]
+        options:
+          type: object
+          required: [rounds]
+          properties:
+            rounds:
+              type: string
+              pattern: '^\d+$'
+
+    matchType:
+      type: object
+      required: [identifier]
+      properties:
+        identifier:
+          type: string
+          enum: [bestOf, single_elim]
+        options:
+          type: object
+          required: [best_of]
+          properties:
+            best_of:
+              type: string
+              pattern: '^\d+$'
+
+    gameMode:
+      type: object
+      required: [identifier, requiredPlayers, mapName]
+      properties:
+        identifier:
+          type: string
+          enum: [lol:duel, lol:classic]
+        requiredPlayers:
+          type: integer
+          enum: [1, 5]
+        mapName:
+          type: string
+          enum: [summoner_rift, howling_abyss]
+
+    highlanderMatch:
+      type: object
+      required: [id, name, position, state, groupPosition, input, games,
+        tiebreaker, remadeGames, roles, scores]
+      properties:
+        id:
+          type: string
+          pattern: *uuidRegex
+          description: The match ID
+        name:
+          type: string
+        position:
+          type: integer
+        state:
+          <<: *highlanderState
+          description: |
+            Whether it is ongoing or completed.
+        groupPosition:
+          type: integer
+        matchType:
+          $ref: '#/components/schemas/matchType'
+        gameMode:
+          $ref: '#/components/schemas/gameMode'
+        input: &matchInput
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/simpleRoster'
+              - oneOf:
+                - type: object
+                  properties:
+                    match:
+                      type: string
+                      pattern: *uuidRegex
+                      description: The match ID
+                - type: object
+                  properties:
+                    breakpoint:
+                      type: string
+                      pattern: *uuidRegex
+                      description: The breakpoint ID
+              - type: object
+                properties:
+                  standing:
+                    type: integer
+
+        games:
+          type: object
+          description: |
+            The keys to this object are [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+            representing the game ID.
+
+            These are the games played in that series.
+
+            The number of properties(key and value pair) in this object will be equal to the type of series that was
+            played. For a best of 1 there will be only 1 game, 3 for best of 3s and 5 for best of 5s.
+          additionalProperties:
+            $ref: '#/components/schemas/highlanderGame'
+        standings:
+          $ref: '#/components/schemas/standings'
+        tiebreaker:
+          type: boolean
+          enum: [true, false]
+        remadeGames:
+          type: array
+          items:
+            $ref: '#/components/schemas/highlanderGame'
+        roles:
+          $ref: '#/components/schemas/roles'
+        scoring:
+          $ref: '#/components/schemas/scoring'
+        scores:
+          $ref: '#/components/schemas/scores'
+
+
+    highlanderGame:
+      type: object
+      required: [id, name, generatedName, input, scores, revision, roles]
+      properties:
+        id:
+          $ref: '#/components/schemas/gameId'
+        name:
+          type: string
+        generatedName:
+          type: string
+        state:
+          type: string
+          enum: [remade]
+        gameMode:
+          $ref: '#/components/schemas/gameMode'
+        input: *matchInput
+        standings:
+          $ref: '#/components/schemas/standings'
+        scores:
+          $ref: '#/components/schemas/scores'
+        gameId:
+          type: string
+          pattern: '^\d+$'
+          description: |
+            The numeric version of the game ID
+
+            This is what is used to access the ACS endpoint.
+        gameRealm:
+          type: string
+          pattern: '^[A-Z]+\d+$'
+          description: |
+            The ID of the tournament realm on which the game was played on
+        platformId:
+          type: string
+          pattern: '^[A-Z]+\d+:\d+$'
+          description:
+            A combination of the gameRealm and the gameId
+        revision:
+          type: integer
+        roles:
+          $ref: '#/components/schemas/roles'
+
+    scoring:
+      type: object
+      required: [identifier, options]
+      properties:
+        identifier:
+          type: string
+          description: '**Note:** The `LegacyScoringStrategy` value has only been found in the 2015 worlds championship.'
+          enum: [standard, LegacyScoringStrategy]
+        options:
+          type: object
+          required: [points]
+          properties:
+            points:
+              type: array
+              minItems: 2
+              maxItems: 2
+              items:
+                type: integer
+
+    scores:
+      type: object
+      minProperties: 0
+      description: |
+        The keys to this object are [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+        representing the roster ID.
+      additionalProperties:
+        type: integer
 
   securitySchemes:
     apiKeyAuth:
