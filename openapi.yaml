@@ -589,6 +589,112 @@ paths:
 
       servers: *v2
 
+  /leagues:
+    get:
+      operationId: leagues
+
+      parameters:
+        - name: query
+          in: query
+          description: |
+            'This endpoint requires either the id or the slug to be passed. If both are present then only the first
+            one will be considered.
+
+            _Due to a limitation in the OpenApi specification it is not possible to show the mutual exclusive nature
+            that the query parameters in this endpoint require. The schema below is as close as a representation I
+            could get in expressing the nature of the query parameters._
+
+            Check the examples below to help better understand the query parameters needed.
+
+            **Example 1**
+
+            `https://api.lolesports.com/api/v1/leagues?id=3`
+
+            This will return the details for **LEC**.
+
+            **Example 2**
+
+            `https://api.lolesports.com/api/v1/leagues?slug=worlds`
+
+            This will return the details for **Worlds**
+
+            **Example 3**
+
+            `https://api.lolesports.com/api/v1/leagues?id=3&slug=worlds`
+
+            In such a scenario where both query parameters are used only the first will be considered, hence it will
+            only return the details for **LEC**.
+
+            **Example 4**
+
+            `https://api.lolesports.com/api/v1/leagues`
+
+            This is not valid. At least one of the two query parameters (id or slug) is required.'
+          required: true
+          schema:
+            type: object
+            oneOf:
+              - type: object
+                required: [id]
+                properties:
+                  id:
+                    type: integer
+                additionalProperties: false
+              - type: object
+                required: [slug]
+                properties:
+                  slug:
+                    type: string
+                additionalProperties: false
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [leagues]
+                properties:
+                  leagues:
+                    type: array
+                    description: |
+                      This array contains information about the league retrieved.
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/highlanderLeague'
+                  highlanderTournaments:
+                    $ref: '#/components/schemas/highlanderTournaments'
+                  highlanderRecords:
+                    $ref: '#/components/schemas/highlanderRecords'
+                  teams:
+                    type: array
+                    description: |
+                      An array containing the teams that have participated in this league.
+                    items:
+                      $ref: '#/components/schemas/highlanderTeam'
+                  players:
+                    type: array
+                    minItems: 0
+                    items:
+                      $ref: '#/components/schemas/highlanderPlayer'
+
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  error:
+                    type: string
+                    enum: [Invalid Input Error]
+
+      servers: *v1
+
 components:
   schemas:
     pageToken:
@@ -601,6 +707,8 @@ components:
 
     baseLeague:
       type: object
+      required: [name, slug]
+      additionalProperties: false
       properties:
         name: &leagueName
           type: string
@@ -637,11 +745,15 @@ components:
       allOf:
         - $ref: '#/components/schemas/baseLeague'
         - type: object
+          required: [id, guid, region, drupalId, logoUrl, createdAt, updatedAt, abouts, names]
+          additionalProperties: false
           properties:
             id:
               description: The league's ID
               type: integer
             guid:
+              description: |
+                The [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier) for the league.
               type: string
             region:
               type: string
@@ -662,7 +774,7 @@ components:
             abouts:
               type: object
               description: |
-                Contains a description of the league translated to various locales.
+                Contains a description of the league translated in various languages.
 
                 The keys are presented in the format ([ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1)
                 and [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))
@@ -677,7 +789,7 @@ components:
             names:
               type: object
               description: |
-                Contains the names of the league translated to various locales.
+                Contains the names of the league translated in various languages.
 
                 The keys are presented in the format ([ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1)
                 and [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))
@@ -689,6 +801,14 @@ components:
               minProperties: 0
               additionalProperties:
                 type: string
+            tournaments:
+              type: array
+              description: |
+                An array containing the [UUIDs](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+                for the tournaments in this league.
+              items:
+                type: string
+                pattern: &uuidRegex '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
 
     record:
       type: object
@@ -1379,7 +1499,7 @@ components:
         The game Id of the match.
 
         It is a [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
-      pattern: &uuidRegex '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+      pattern: *uuidRegex
 
     highlanderTournaments:
       type: array
@@ -1407,7 +1527,7 @@ components:
           description: The tournament's name
         leagueReference:
           type: string
-          pattern: '^urn:rg:lolesports:global:league:league:\d+$'
+          pattern: &leagueReference '^urn:rg:lolesports:global:league:league:\d+$'
           description: The integer in the string represents the league ID.
         roles:
           $ref: '#/components/schemas/roles'
@@ -1904,6 +2024,213 @@ components:
         representing the roster ID.
       additionalProperties:
         type: integer
+
+    highlanderRecords:
+      type: array
+      items:
+        $ref: '#/components/schemas/highlanderRecord'
+
+    highlanderRecord:
+      type: object
+      additionalProperties: false
+      required: [wins, losses, ties, score, roster, tournament, bracket, id]
+      properties:
+        wins:
+          type: integer
+        losses:
+          type: integer
+        ties:
+          type: integer
+        score:
+          type: integer
+        roster: &uuidObject
+          type: string
+          description: The roster's [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+          pattern: *uuidRegex
+        tournament:
+          <<: *uuidObject
+          description: The tournament's [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+        bracket:
+          <<: *uuidObject
+          description: The bracket's [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+        id:
+          type: string
+          description: |
+            A combination of the bracket and roster UUIDs. The two are separated by a colon\
+          pattern: '^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$'
+
+    highlanderTeam:
+      type: object
+      additionalProperties: false
+      required: [id, slug, name, guid, teamPhotoUrl, logoUrl, acronym, homeLeague,
+        altLogoUrl, createdAt, updatedAt, bios, foreignIds, players, starters, subs]
+      properties:
+        id:
+          type: integer
+          description: The team ID.
+        slug:
+          type: string
+          description: URL friendly version of the team name.
+        name:
+          type: string
+          description: The team name.
+        guid:
+          type: string
+          description: The team's [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier).
+          pattern: *uuidRegex
+        teamPhotoUrl:
+          type: string
+          nullable: true
+        logoUrl:
+          type: string
+          description: URL to an image of the team's logo.
+        acronym:
+          type: string
+          description: The acronym form of the team name
+        homeLeague:
+          type: string
+          description: |
+            Describes the league this team participates in during the regular seasons.
+          pattern: *leagueReference
+        altLogoUrl:
+          type: string
+          nullable: true
+          description: Alternative URL to the team's logo.
+        createdAt: *createdAt
+        updatedAt: *updatedAt
+        bios:
+          type: object
+          description: |
+            Contains a description of the team translated to various languages.
+
+            The keys are presented in the format ([ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1)
+            and [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))
+
+            `{languageCode}_{countryCode}`
+
+            The value is a string containing
+            html tags representing the description in that specific locale.
+          additionalProperties:
+            type: string
+        foreignIds:
+          $ref: '#/components/schemas/foreignIds'
+        players:
+          type: array
+          description: An array containing the player IDs for those belonging in that team.
+          items:
+            type: integer
+        starters:
+          type: array
+          description: An array of the player IDs of those in the main roster
+          items:
+            type: integer
+        subs:
+          type: array
+          description: An array of the player IDs of the subs.
+          items:
+            type: integer
+
+    foreignIds:
+      type: object
+      properties:
+        drupalId:
+          type: string
+
+    highlanderPlayer:
+      type: object
+      additionalProperties: false
+      required: [id, slug, name, firstName, lastName, roleSlug, photoUrl, hometown, region,
+        birthdate, createdAt, updatedAt, bios, foreignIds, socialNetworks, champions]
+      properties:
+        id:
+          type: integer
+          description: The player ID
+        slug:
+          type: string
+          description: URL friendly version of the player's in game name
+        name:
+          type: string
+          description: The player's in game name
+        firstName:
+          type: string
+        LastName:
+          type: string
+          nullable: true
+        roleSlug:
+          type: string
+          description: The role they usually play
+        photoUrl:
+          type: string
+          nullable: true
+          description: URL to the player's photo
+        hometown:
+          type: string
+          nullable: true
+        region:
+          type: string
+        birthdate:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt: *createdAt
+        updatedAt: *updatedAt
+        bios:
+          type: object
+          description: |
+            Contains a description of the player translated to various languages.
+
+            The keys are presented in the format ([ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1)
+            and [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))
+
+            `{languageCode}_{countryCode}`
+
+            The value is a string containing
+            html tags representing the description in that specific locale.
+          additionalProperties:
+            type: string
+        foreignIds:
+          allOf:
+            - $ref: '#/components/schemas/foreignIds'
+            - type: object
+              description: |
+                'This object may contain keys which are the names of various tournament realms.
+
+                **Example:** `ESPORTSTMNT02: "200008392"`
+
+                The purpose of the value in those strings is unknown.'
+              additionalProperties:
+                type: string
+        socialNetworks:
+          type: object
+          description: |
+            Contains links to the player's social media accounts.
+
+            The key is the name of the social media platform and the value is the URL
+          additionalProperties:
+            type: string
+        champions:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, playerId, championId, championKey, championName, createdAt, updatedAt]
+            properties:
+              id:
+                type: integer
+              playerId:
+                type: integer
+                description: The player ID
+              championId:
+                type: integer
+                description: The champion ID
+              championKey:
+                type: string
+                description: The champion's name
+              championName:
+                type: string
+                description: The champion's name
+              createdAt: *createdAt
+              updatedAt: *updatedAt
 
   securitySchemes:
     apiKeyAuth:
