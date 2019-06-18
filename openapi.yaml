@@ -558,6 +558,10 @@ paths:
   /highlanderTournaments:
     get:
       operationId: highlanderTournaments
+
+      parameters:
+        - $ref: '#/components/parameters/league'
+
       description: |
         If a league does not have highlanderTournament objects, the API will return 404
 
@@ -720,6 +724,218 @@ paths:
 
       servers: *v1
 
+  /teams:
+    get:
+      operationId: teams
+
+      description: |
+        If the `teamStatsSummaries`, `teamRosterStats` and `teamStatsHistories` keys are not present,
+        then the team did not take part in that particular tournament.
+
+      parameters:
+        - $ref: '#/components/parameters/teamSlug'
+        - $ref: '#/components/parameters/highlanderTournamentId'
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [players, highlanderTournaments, scheduleItems, teams]
+                properties:
+                  players:
+                    type: array
+                    description: Contains the players currently in the team.
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/highlanderPlayer'
+                        - type: object
+                          additionalProperties: false
+                          properties:
+                            teamRosterStat:
+                              type: string
+                              pattern: '^urn:rg:lolesports:global:player:player:\d+$'
+                  highlanderTournaments:
+                    $ref: '#/components/schemas/highlanderTournaments'
+                  scheduleItems:
+                    type: array
+                    description: Contains details about a few of the team's upcoming matches
+                    items:
+                      $ref: '#/components/schemas/scheduleItem'
+                  teamStatsSummaries:
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    description: |
+                      Contains a summary of the team stats during that particular tournament.
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [teamId, kdaRatio, kdaRatioRank, averageWinLength, averageWinLengthRank,
+                        firstDragonKillRatio, firstDragonKillRatioRank, firstTowerRatio, firstTowerRatioRank,
+                        averageDamageByPosition]
+                      properties:
+                        teamId:
+                          type: string
+                          pattern: '^urn:rg:lolesports:global:team:team:\d+$'
+                          description: Contains the team ID
+                        kdaRatio:
+                          type: number
+                          format: double
+                          description: The team's KDA Ratio
+                        kdaRatioRank:
+                          type: integer
+                          format: int32
+                          description: |
+                            The position the team ranks at compared to other teams' KDA ratio
+                        averageWinLength:
+                          type: integer
+                          format: int32
+                          description: |
+                            The average length of the team's wins in seconds.
+                        averageWinLengthRank:
+                          type: integer
+                          format: int32
+                          description: |
+                            The position the team ranks at compared to other team's average win lengths.
+                        firstDragonKillRatio:
+                          type: number
+                          format: double
+                          description: |
+                            The ratio of first dragons killed by this team compared to the total first dragons killed
+                            in this team's matches.
+                        firstDragonKillRatioRank:
+                          type: integer
+                          format: int32
+                          description: |
+                            The position the teams ranks at compared to other team's first dragon kill ratio
+                        firstTowerRatio:
+                          type: number
+                          format: double
+                          description: |
+                            The ratio of first tower secured by this team compared to the total first towers secured
+                            in this team's matches.
+                        firstTowerRatioRank:
+                          type: integer
+                          format: int32
+                          description: |
+                            The position the teams ranks at compared to other team's first tower ratio.
+                        averageDamageByPosition:
+                          type: object
+                          additionalProperties: false
+                          description: |
+                            It is assumed that the values represent the damage dealt in thousands.
+                          properties:
+                            DUO_CARRY:
+                              type: integer
+                              format: int32
+                            DUO_SUPPORT:
+                              type: integer
+                              format: int32
+                            SOLO:
+                              type: integer
+                              format: int32
+                            NONE:
+                              type: integer
+                              format: int32
+                            DUO:
+                              type: integer
+                              format: int32
+                  teamRosterStats:
+                    type: array
+                    description: |
+                      Contains stats of the players of the particular team who played in that tournament.
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [playerId, gamesPlayed, averageAssists, averageDeaths, averageKillParticipation,
+                        averageKills, summonerName, championIds]
+                      properties:
+                        playerId:
+                          type: string
+                          pattern: '^urn:rg:lolesports:global:player:player:\d+$'
+                        gamesPlayed:
+                          type: integer
+                          format: int32
+                        averageAssists:
+                          type: integer
+                          format: int32
+                        averageDeaths:
+                          type: number
+                          format: double
+                        averageKillParticipation:
+                          type: number
+                          format: double
+                        averageKills:
+                          type: number
+                          format: double
+                        summonerName:
+                          type: string
+                        championIds:
+                          type: array
+                          minItems: 1
+                          maxItems: 3
+                          items:
+                            type: integer
+                            format: int32
+                  teamStatsHistories:
+                    type: array
+                    maxItems: 4
+                    description: |
+                      A contains stats of the team's previous 4 matches in that particular tournament.
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [id, timestamp, assists, deaths, kills, win, championsIds, match, team,
+                        opponent, game]
+                      properties:
+                        id:
+                          type: string
+                          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}:\d+$'
+                          description: Contains the game ID and the team ID.
+                        timestamp:
+                          type: integer
+                          format: int64
+                          description: 'Unix timestamp in milliseconds of when the match started.'
+                        assists:
+                          type: integer
+                          format: int32
+                        kills:
+                          type: integer
+                          format: int32
+                        win:
+                          type: boolean
+                          enum: [true, false]
+                        championIds:
+                          type: array
+                          minItems: 5
+                          maxItems: 5
+                          items:
+                            type: integer
+                            format: int32
+                        match:
+                          type: string
+                          pattern: &uuidRegex '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+                          description: The match ID
+                        team:
+                          type: integer
+                          format: int32
+                          description: The team ID
+                        opponent:
+                          type: integer
+                          format: int32
+                          description: The opponent's team ID
+                        game:
+                          type: integer
+                          format: int32
+                          description: The game ID
+
+                  teams:
+                    $ref: '#/components/schemas/highlanderTeams'
+
 components:
   schemas:
     pageToken:
@@ -833,7 +1049,7 @@ components:
                 for the tournaments in this league.
               items:
                 type: string
-                pattern: &uuidRegex '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+                pattern: *uuidRegex
 
     record:
       type: object
@@ -1763,7 +1979,7 @@ components:
           $ref: '#/components/schemas/highlanderResult'
         timestamp:
           type: integer
-          description: Unix timestamp
+          description: Unix timestamp in milliseconds
         source:
           type: string
           enum: [manual, bestOf]
@@ -2389,6 +2605,7 @@ components:
 
     highlanderLeagueId:
       name: leagueId
+      required: true
       in: query
       description: The id of the league you want details of
       schema:
@@ -2467,3 +2684,29 @@ components:
       schema:
         type: string
         format: date-time
+
+    league:
+      name: league
+      in: query
+      required: true
+      description: The id of the league you want details of
+      schema:
+        type: string
+        format: int32
+
+    teamSlug:
+      name: slug
+      in: query
+      required: true
+      description: The team slug.
+      schema:
+        type: string
+
+    highlanderTournamentId:
+      name: tournament
+      in: query
+      required: true
+      description: The tournament ID.
+      schema:
+        type: string
+        pattern: *uuidRegex
