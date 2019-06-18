@@ -670,16 +670,9 @@ paths:
                   highlanderRecords:
                     $ref: '#/components/schemas/highlanderRecords'
                   teams:
-                    type: array
-                    description: |
-                      An array containing the teams that have participated in this league.
-                    items:
-                      $ref: '#/components/schemas/highlanderTeam'
+                    $ref: '#/components/schemas/highlanderTeams'
                   players:
-                    type: array
-                    minItems: 0
-                    items:
-                      $ref: '#/components/schemas/highlanderPlayer'
+                    $ref: '#/components/schemas/highlanderPlayers'
 
         '404':
           description: Not Found
@@ -692,6 +685,38 @@ paths:
                   error:
                     type: string
                     enum: [Invalid Input Error]
+
+      servers: *v1
+
+  /scheduleItems:
+    get:
+      operationId: scheduleItems
+
+      parameters:
+        - $ref: '#/components/parameters/highlanderLeagueId'
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  scheduleItems:
+                    type: array
+                    minItems: 0
+                    items:
+                      $ref: '#/components/schemas/scheduleItem'
+                  highlanderTournaments:
+                    $ref: '#/components/schemas/highlanderTournaments'
+                  teams:
+                    $ref: '#/components/schemas/highlanderTeams'
+                  highlanderRecords:
+                    $ref: '#/components/schemas/highlanderRecords'
+                  players:
+                    $ref: '#/components/schemas/highlanderPlayers'
 
       servers: *v1
 
@@ -2232,6 +2257,102 @@ components:
               createdAt: *createdAt
               updatedAt: *updatedAt
 
+    highlanderTeams:
+      type: array
+      description: |
+        An array containing the teams that have participated in this league.
+      items:
+        $ref: '#/components/schemas/highlanderTeam'
+
+    highlanderPlayers:
+      type: array
+      items:
+        $ref: '#/components/schemas/highlanderPlayer'
+
+    baseScheduleItem:
+      type: object
+      additionalProperties: false
+      required: [id, scheduledTime, tags, tournament, league]
+      properties:
+        id:
+          type: string
+        scheduledTime:
+          type: string
+          format: date-time
+          description: The time the match/event is/was scheduled to start.
+        tags:
+          $ref: '#/components/schemas/tags'
+        tournament:
+          type: string
+          pattern: *uuidRegex
+          description: The tournament ID
+        league:
+          type: string
+          description: The League ID
+
+    scheduleItem:
+      allOf:
+        - $ref: '#/components/schemas/baseScheduleItem'
+        - oneOf:
+          - type: object
+            additionalProperties: false
+            required: [content, match, bracket]
+            properties:
+              content:
+                type: string
+                pattern: '^urn:rg:lolesports:global:highlander:tournament:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):match:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$'
+                description: |
+                  Contains the tournament and match Ids for the specific match.
+              match:
+                type: string
+                pattern: *uuidRegex
+                description: The match ID
+              bracket:
+                type: string
+                pattern: *uuidRegex
+                description: The bracket ID
+          - type: object
+            additionalProperties: false
+            required: [content]
+            properties:
+              content:
+                type: string
+                pattern: '^{\\"imageUrl\\":null,\\"label\\":\\"(?:rebroadcast|pt1|opening-ceremony|worlds-pre-show)\\"}$'
+
+    tags:
+      type: object
+      additionalProperties: false
+      required: [leagueLabel, tournamentLabel, blockLabel, subBlockLabel, subBlockPrefix]
+      description: |
+        The labels are used to describe the week and day the match/event is taking place in.
+        Also, it could indicate the stage of the tournament.
+
+        The blockPrefix comes before the block Label. Same with the subBlockPrefix and the subBlockLabel.
+      properties:
+        subBlockLabel:
+          type: string
+        blockLabel:
+          type: string
+        leagueLabel:
+          type: string
+          pattern: *leagueReference
+        blockPrefix:
+          type: string
+        subBlockPrefix:
+          type: string
+        yearLabel:
+          type: string
+        stageLabel:
+          type: string
+          pattern: '^urn:rg:lolesports:global:highlander:tournament:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):bracket:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$'
+          description: |
+            Contains the tournament and bracket Ids the match/event belongs to.
+        tournamentLabel:
+          type: string
+          pattern: '^urn:rg:lolesports:global:highlander:tournament:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$'
+          description: |
+            Contains the tournament ID.
+
   securitySchemes:
     apiKeyAuth:
       type: apiKey
@@ -2265,6 +2386,14 @@ components:
       schema:
         type: integer
         format: int64
+
+    highlanderLeagueId:
+      name: leagueId
+      in: query
+      description: The id of the league you want details of
+      schema:
+        type: integer
+        format: int32
 
     pageToken:
       name: pageToken
