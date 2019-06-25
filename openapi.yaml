@@ -936,6 +936,8 @@ paths:
                   teams:
                     $ref: '#/components/schemas/highlanderTeams'
 
+      servers: *v1
+
 components:
   schemas:
     pageToken:
