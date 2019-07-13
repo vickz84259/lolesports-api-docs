@@ -49,9 +49,13 @@ paths:
             application/json:
               schema:
                 type: object
+                additionalProperties: false
+                required: [data]
                 properties:
                   data:
                     type: object
+                    additionalProperties: false
+                    required: [leagues]
                     properties:
                       leagues:
                         type: array
@@ -59,6 +63,8 @@ paths:
                           allOf:
                             - $ref: '#/components/schemas/extendedLeague'
                             - type: object
+                              required: [region]
+                              additionalProperties: false
                               properties:
                                 region:
                                   description: |
@@ -92,12 +98,18 @@ paths:
             application/json:
               schema:
                 type: object
+                additionalProperties: false
+                required: [data]
                 properties:
                   data:
                     type: object
+                    additionalProperties: false
+                    required: [schedule]
                     properties:
                       schedule:
                         type: object
+                        additionalProperties: false
+                        required: [updated, pages, events]
                         properties:
                           updated:
                             description: The time the data presented was last updated
@@ -105,6 +117,8 @@ paths:
                             format: date-time
                           pages:
                             type: object
+                            additionalProperties: false
+                            required: [older, newer]
                             properties:
                               older:
                                 $ref: "#/components/schemas/pageToken"
@@ -116,21 +130,29 @@ paths:
                               allOf:
                                 - $ref: '#/components/schemas/extendedEvent'
                                 - type: object
+                                  additionalProperties: false
+                                  required: [league, match]
                                   properties:
                                     league:
                                       $ref: '#/components/schemas/baseLeague'
                                     match:
                                       type: object
+                                      additionalProperties: false
+                                      required: [teams]
                                       properties:
                                         teams:
                                           type: array
                                           items:
                                             type: object
+                                            additionalProperties: false
+                                            required: [record, result]
                                             properties:
                                               record:
                                                 $ref: '#/components/schemas/record'
                                               result:
                                                 type: object
+                                                additionalProperties: false
+                                                required: [outcome]
                                                 properties:
                                                   outcome:
                                                     $ref: '#/components/schemas/outcome'
@@ -157,12 +179,18 @@ paths:
             application/json:
               schema:
                 type: object
+                additionalProperties: false
+                required: [data]
                 properties:
                   data:
                     type: object
+                    additionalProperties: false
+                    required: [schedule]
                     properties:
                       schedule:
                         type: object
+                        additionalProperties: false
+                        required: [events]
                         properties:
                           events:
                             type: array
@@ -177,6 +205,8 @@ paths:
                               allOf:
                                 - $ref: '#/components/schemas/extendedEvent'
                                 - type: object
+                                  additionalProperties: false
+                                  required: [id, league]
                                   properties:
                                     id:
                                       type: string
@@ -184,11 +214,15 @@ paths:
                                       $ref: '#/components/schemas/extendedLeague'
                                     match:
                                       type: object
+                                      additionalProperties: false
+                                      required: [teams]
                                       properties:
                                         teams:
                                           type: array
                                           items:
                                             type: object
+                                            additionalProperties: false
+                                            required: [slug, record, result]
                                             properties:
                                               slug:
                                                 $ref: '#/components/schemas/teamSlug'
@@ -196,6 +230,8 @@ paths:
                                                 $ref: '#/components/schemas/record'
                                               result:
                                                 type: object
+                                                additionalProperties: false
+                                                required: [outcome]
                                                 properties:
                                                   outcome:
                                                     $ref: '#/components/schemas/outcome'
@@ -222,9 +258,13 @@ paths:
               application/json:
                 schema:
                   type: object
+                  additionalProperties: false
+                  required: [data]
                   properties:
                     data:
                       type: object
+                      additionalProperties: false
+                      required: [leagues]
                       properties:
                         leagues:
                           type: array
@@ -233,6 +273,8 @@ paths:
                             tournaments.
                           items:
                             type: object
+                            additionalProperties: false
+                            required: [tournaments]
                             properties:
                               tournaments:
                                 type: array
@@ -264,9 +306,13 @@ paths:
             application/json:
               schema:
                 type: object
+                additionalProperties: false
+                required: [data]
                 properties:
                   data:
                     type: object
+                    additionalProperties: false
+                    required: [standings]
                     properties:
                       standings:
                         type: array
@@ -274,6 +320,8 @@ paths:
                           Each object in the array contains details of each tournament requested.
                         items:
                           type: object
+                          additionalProperties: false
+                          required: [stages]
                           properties:
                             stages:
                               type: array
@@ -302,12 +350,18 @@ paths:
             application/json:
               schema:
                 type: object
+                additionalProperties: false
+                required: [data]
                 properties:
                   data:
                     type: object
+                    additionalProperties: false
+                    required: [schedule]
                     properties:
                       schedule:
                         type: object
+                        additionalProperties: false
+                        required: [events]
                         properties:
                           events:
                             type: array
@@ -315,6 +369,8 @@ paths:
                               allOf:
                                 - $ref: '#/components/schemas/simpleEvent'
                                 - type: object
+                                  additionalProperties: false
+                                  required: [games, match]
                                   properties:
                                     games:
                                       type: array
@@ -322,6 +378,8 @@ paths:
                                         $ref: '#/components/schemas/game'
                                     match:
                                       type: object
+                                      additionalProperties: false
+                                      required: [type]
                                       properties:
                                         type:
                                           type: string
@@ -349,14 +407,20 @@ paths:
             application/json:
               schema:
                 type: object
+                additionalProperties: false
+                required: [data]
                 properties:
                   data:
                     type: object
+                    additionalProperties: false
+                    required: [event]
                     properties:
                       event:
                         allOf:
                           - $ref: '#/components/schemas/baseEvent'
                           - type: object
+                            additionalProperties: false
+                            required: [id, type, league, match, streams]
                             properties:
                               id:
                                 type: string
@@ -366,6 +430,8 @@ paths:
                                 $ref: '#/components/schemas/simpleLeague'
                               match:
                                 type: object
+                                additionalProperties: false
+                                required: [games, strategy, teams]
                                 properties:
                                   games:
                                     type: array
@@ -379,6 +445,8 @@ paths:
                                     maxItems: 2
                                     items:
                                       type: object
+                                      additionalProperties: false
+                                      required: [id, result]
                                       properties:
                                         id:
                                           $ref: '#/components/schemas/teamId'
@@ -416,9 +484,13 @@ paths:
             application/json:
               schema:
                 type: object
+                additionalProperties: false
+                required: [data]
                 properties:
                   data:
                     type: object
+                    additionalProperties: false
+                    required: [teams]
                     properties:
                       teams:
                         type: array
@@ -447,9 +519,13 @@ paths:
             application/json:
               schema:
                 type: object
+                additionalProperties: false
+                required: [data]
                 properties:
                   data:
                     type: object
+                    additionalProperties: false
+                    required: [games]
                     properties:
                       games:
                         type: array
@@ -506,6 +582,8 @@ paths:
             application/json:
               schema:
                 type: object
+                additionalProperties: false
+                required: [frames]
                 properties:
                   frames:
                     type: array
@@ -528,6 +606,8 @@ paths:
             application/json:
               schema:
                 type: object
+                additionalProperties: false
+                required: [navItems, leagues]
                 properties:
                   navItems:
                     type: array
@@ -566,6 +646,8 @@ paths:
             application/json:
               schema:
                 type: object
+                additionalProperties: false
+                required: [videos]
                 properties:
                   videos:
                     type: array
@@ -1240,6 +1322,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/baseLeague'
         - type: object
+          additionalProperties: false
+          required: [id, image]
           properties:
             id:
               description: The league's ID
@@ -1253,6 +1337,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/simpleLeague'
         - type: object
+          additionalProperties: false
+          required: [priority]
           properties:
             priority:
               description: Unknown
@@ -1338,6 +1424,8 @@ components:
 
         This object is null when the match is ongoing and it is in the
         knockout stage.
+      additionalProperties: false
+      required: [losses, wins]
       properties:
         losses:
           type: integer
@@ -1348,6 +1436,8 @@ components:
 
     result:
       type: object
+      additionalProperties: false
+      required: [gameWins]
       properties:
         gameWins:
           type: integer
@@ -1367,6 +1457,8 @@ components:
 
     team:
       type: object
+      additionalProperties: false
+      required: [code, image, name]
       properties:
         code:
           type: string
@@ -1380,6 +1472,8 @@ components:
 
     customTeam:
       type: object
+      additionalProperties: false
+      required: [id, side]
       properties:
         id:
           $ref: '#/components/schemas/teamId'
@@ -1391,6 +1485,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/team'
         - type: object
+          additionalProperties: false
+          required: [id, slug, alternativeImage, homeLeague, players]
           properties:
             id:
               $ref: '#/components/schemas/teamId'
@@ -1408,6 +1504,8 @@ components:
 
     homeLeague:
       type: object
+      additionalProperties: false
+      required: [name, region]
       properties:
         name: *leagueName
         region:
@@ -1424,6 +1522,8 @@ components:
 
     baseStrategy:
       type: object
+      additionalProperties: false
+      required: [count]
       properties:
         count:
           type: integer
@@ -1433,6 +1533,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/baseStrategy'
         - type: object
+          additionalProperties: false
+          required: [type]
           properties:
             type:
               type: string
@@ -1447,6 +1549,8 @@ components:
 
     baseMatch:
       type: object
+      additionalProperties: false
+      required: [teams]
       properties:
         teams:
           $ref: '#/components/schemas/teams'
@@ -1455,6 +1559,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/baseMatch'
         - type: object
+          additionalProperties: false
+          required: [id]
           properties:
             id:
               description: The match id
@@ -1476,6 +1582,8 @@ components:
 
     simpleEvent:
       type: object
+      additionalProperties: false
+      required: [startTime, blockName, match]
       properties:
         startTime:
           type: string
@@ -1488,6 +1596,8 @@ components:
           allOf:
             - $ref: '#/components/schemas/simpleMatch'
             - type: object
+              additionalProperties: false
+              required: [strategy, teams]
               properties:
                 strategy:
                   $ref: '#/components/schemas/strategy'
@@ -1495,6 +1605,8 @@ components:
                   type: array
                   items:
                     type: object
+                    additionalProperties: false
+                    required: [result]
                     properties:
                       result:
                         $ref: '#/components/schemas/result'
@@ -1503,6 +1615,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/simpleEvent'
         - type: object
+          additionalProperties: false
+          required: [state, type]
           properties:
             state:
               $ref: '#/components/schemas/state'
@@ -1511,6 +1625,8 @@ components:
 
     tournament:
       type: object
+      additionalProperties: false
+      required: [endDate, id, slug, startDate]
       properties:
         endDate:
           type: string
@@ -1532,6 +1648,8 @@ components:
         Represents a stage in a tournament.
 
         Whether it is the group or knockout stage.
+      additionalProperties: false
+      required: [name, type, slug, sections]
       properties:
           name:
             type: string
@@ -1557,6 +1675,8 @@ components:
 
     section:
       type: object
+      additionalProperties: false
+      required: [name, matches, rankings]
       properties:
         name:
           type: string
@@ -1567,6 +1687,8 @@ components:
             allOf:
               - $ref: '#/components/schemas/simpleMatch'
               - type: object
+                additionalProperties: false
+                required: [state, previousMatchIds, flags, teams]
                 properties:
                   state:
                     $ref: '#/components/schemas/state'
@@ -1593,13 +1715,22 @@ components:
                     type: array
                     items:
                       type: object
+                      additionalProperties: false
+                      required: [id, slug, result]
                       properties:
                         id:
                           $ref: '#/components/schemas/teamId'
                         slug:
                           $ref: '#/components/schemas/teamSlug'
                         result:
-                          $ref: '#/components/schemas/result'
+                          allOf:
+                            - $ref: '#/components/schemas/result'
+                            - type: object
+                              additionalProperties: false
+                              required: outcome
+                              properties:
+                                outcome:
+                                  $ref: '#/components/schemas/outcome'
         rankings:
           type: array
           description: |
@@ -1613,6 +1744,8 @@ components:
 
     ranking:
       type: object
+      additionalProperties: false
+      required: [ordinal, teams]
       properties:
         ordinal:
           type: integer
@@ -1639,6 +1772,8 @@ components:
 
     game:
       type: object
+      additionalProperties: false
+      required: [vods]
       properties:
         vods:
           type: array
@@ -1647,6 +1782,8 @@ components:
 
     simpleGame:
       type: object
+      additionalProperties: false
+      required: [id, state, number, vods]
       properties:
         id:
           type: string
@@ -1666,6 +1803,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/simpleGame'
         - type: object
+          additionalProperties: false
+          required: [teams]
           properties:
             teams:
               type: array
@@ -1674,6 +1813,8 @@ components:
 
     vod:
       type: object
+      additionalProperties: false
+      required: [parameter]
       properties:
         parameter:
           type: string
@@ -1682,6 +1823,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/vod'
         - type: object
+          additionalProperties: false
+          required: [locale, provider, offset]
           properties:
             locale:
               $ref: '#/components/schemas/locale'
@@ -1705,6 +1848,8 @@ components:
 
     player:
       type: object
+      additionalProperties: false
+      required: [id, summonerName, firstName, lastName, image, role]
       properties:
         id:
           type: string
@@ -1721,6 +1866,8 @@ components:
 
     window:
       type: object
+      additionalProperties: false
+      required: [esportsGameId, esportsMatchId, gameMetadata, frames]
       properties:
         esportsGameId:
           type: string
@@ -1737,6 +1884,8 @@ components:
 
     gameMetadata:
       type: object
+      additionalProperties: false
+      required: [patchVersion, blueTeamMetadata, redTeamMetadata]
       properties:
         patchVersion:
           type: string
@@ -1748,6 +1897,8 @@ components:
 
     teamMetadata:
       type: object
+      additionalProperties: false
+      required: [esportsTeamId, participantMetadata]
       properties:
         esportsTeamId:
           type: string
@@ -1761,6 +1912,8 @@ components:
 
     participantMetadata:
       type: object
+      additionalProperties: false
+      required: [participantId, summonerName, championId, role]
       properties:
         participantId:
           $ref: '#/components/schemas/participantId'
@@ -1776,6 +1929,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/participantMetadata'
         - type: object
+          additionalProperties: false
+          required: [esportsPlayerId]
           properties:
             esportsPlayerId:
               type: string
@@ -1786,6 +1941,8 @@ components:
 
     baseFrame:
       type: object
+      additionalProperties: false
+      required: [rfc460Timestamp]
       properties:
         rfc460Timestamp:
           type: string
@@ -1795,6 +1952,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/baseFrame'
         - type: object
+          additionalProperties: false
+          required: [rfc460Timestamp, gameState, blueTeam, redTeam]
           properties:
             rfc460Timestamp:
               type: string
@@ -1811,6 +1970,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/baseFrame'
         - type: object
+          additionalProperties: false
+          required: [participants]
           properties:
             participants:
               type: array
@@ -1821,6 +1982,8 @@ components:
 
     teamStats:
       type: object
+      additionalProperties: false
+      required: [totalGold, inhibitors, towers, barons, totalKills, dragons, participants]
       properties:
         totalGold:
           type: integer
@@ -1845,6 +2008,8 @@ components:
 
     baseParticipantStats:
       type: object
+      additionalProperties: false
+      required: [participantId, level, kills, deaths, assists, creepScore]
       properties:
         participantId:
           $ref: '#/components/schemas/participantId'
@@ -1863,6 +2028,8 @@ components:
       allOf:
         - $ref: '#/components/schemas/baseParticipantStats'
         - type: object
+          additionalProperties: false
+          required: [totalGold, currentHealth, maxHealth]
           properties:
             totalGold:
               type: integer
@@ -1875,6 +2042,10 @@ components:
       allOf:
         - $ref: '#/components/schemas/participantStats'
         - type: object
+          additionalProperties: false
+          required: [totalGoldEarned, killParticipation, championDamageShare, wardsPlaced, wardsDestroyed,
+            attackDamage, abilityPower, criticalChance, attackSpeed, lifeSteal, armor, magicResistance, tenacity,
+            items, perkMetadata, abilities]
           properties:
             totalGoldEarned:
               type: integer
@@ -1920,6 +2091,8 @@ components:
 
     perkMetadata:
       type: object
+      additionalProperties: false
+      required: [styleId, subStyleId, perks]
       properties:
         styleId:
           type: integer
@@ -1955,6 +2128,8 @@ components:
 
     navItem:
       type: object
+      additionalProperties: false
+      required: [id, link, slug, label, imageUrl, order, external, parentNavItem, createdAt, updatedAt]
       properties:
         id:
           type: integer
@@ -1982,6 +2157,8 @@ components:
 
     video:
       type: object
+      additionalProperties: false
+      required: [id, slug, label, locale, reference, source, createdAt, updatedAt, game]
       properties:
         id:
           type: integer
