@@ -2855,6 +2855,8 @@ components:
   securitySchemes:
     apiKeyAuth:
       type: apiKey
+      description: |
+        The key is, `0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z`
       in: header
       name: x-api-key
 
