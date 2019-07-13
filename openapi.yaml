@@ -856,7 +856,7 @@ paths:
                       properties:
                         playerId:
                           type: string
-                          pattern: '^urn:rg:lolesports:global:player:player:\d+$'
+                          pattern: &playerId '^urn:rg:lolesports:global:player:player:\d+$'
                         gamesPlayed:
                           type: integer
                           format: int32
@@ -896,7 +896,7 @@ paths:
                           type: string
                           pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}:\d+$'
                           description: Contains the game ID and the team ID.
-                        timestamp:
+                        timestamp: &timestamp
                           type: integer
                           format: int64
                           description: 'Unix timestamp in milliseconds of when the match started.'
@@ -935,6 +935,245 @@ paths:
 
                   teams:
                     $ref: '#/components/schemas/highlanderTeams'
+
+      servers: *v1
+
+  /players:
+    get:
+      operationId: players
+
+      description: |
+        If the `playerStatsSummaries` and `playerStatsHistories` keys are not present,
+        then the player did not take part in that particular tournament.
+
+      parameters:
+        - $ref: '#/components/parameters/playerSlug'
+        - $ref: '#/components/parameters/highlanderTournamentId'
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [players, highlanderTournaments, scheduleItems, teams]
+                properties:
+                  players:
+                    type: array
+                    description: |
+                      Contains information about the player in question.
+
+                      If `playerStatsSummary` and `playerStatsHistory` are missing then the player did not take part
+                      in the tournament specificed by the tournament ID in the url.
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/highlanderPlayer'
+                        - type: object
+                          additionalProperties: false
+                          required: [starterOnTeams, subOnTeams, teams, photoInformation, scheduleItems]
+                          properties:
+                            starterOnTeams:
+                              type: array
+                              description: |
+                                The IDs of the team(s) this player is/has been on the starting
+                                lineup
+                              items:
+                                type: integer
+                            subOnTeams:
+                              type: array
+                              description: |
+                                The IDs of the team(s) this player is/has been on as a sub player
+                              items:
+                                type: integer
+                            teams:
+                              type: array
+                              description: |
+                                A combination of the teamIDs in `starterOnTeams` and `subOnTeams`
+                              items:
+                                type: integer
+                            photoInformation:
+                              type: object
+                              additionalProperties: false
+                              required: [width, height, type, url, transferred, size, time]
+                              properties:
+                                width:
+                                  type: integer
+                                  description: The width of the image in pixels.
+                                height:
+                                  type: integer
+                                  description: The height of the image in pixels.
+                                type:
+                                  type: string
+                                  description: The image's file format.
+                                url:
+                                  type: string
+                                  description: URL to the player's photo.
+                                transferred:
+                                  type: integer
+                                size:
+                                  type: integer
+                                  description: Size of the image in bytes
+                                time:
+                                  type: float
+                            scheduleItems:
+                              type: array
+                              description: |
+                                Contains the ids to schedule items representing the player's/team's next matches.
+
+                                This is regardless of the tournament ID passed in the url.
+                              maxItems: 4
+                              items:
+                                type: string
+                            playerStatsSummary:
+                              type: string
+                              pattern: '^urn:rg:lolesports:global:player:player:\d+$'
+                            playerStatsHistory:
+                              type: array
+                              description: |
+                                Contains the `playerStatsHistory` IDs, which are just the game ID of the match and the player
+                                ID separated by a colon.
+
+                                Contains the last 4 played matches in the specified tournament. The first ID is of the most
+                                recently played match.
+                              maxItems: 4
+                              items:
+                                type: string
+                                pattern: &statsHistoryId '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}:\d+$'
+                  highlanderTournaments:
+                    type: array
+                    description: |
+                      Contains the various tournaments the player has participated in.
+                    items:
+                      $ref: '#/components/schemas/highlanderTournament'
+                  scheduleItems:
+                    type: array
+                    maxItems: 4
+                    description: |
+                      Contains details about the next 4 matches the player's team is schedule to participate in.
+                    items:
+                      $ref: '#/components/schemas/matchScheduleItem'
+                  teams:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/highlanderTeam'
+                  playerStatsSummaries:
+                    type: array
+                    description: |
+                      The stats displayed here are for the player during the tournament specified in the url
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [playerId, kdaRatio, kdaRatioRank, csPerTenMinutes, csPerTenMinutesRank, killParticipation,
+                        killParticipationRank, mostplayedchampions]
+                      properties:
+                        playerId:
+                          type: string
+                          pattern: *playerId
+                        kdaRatio:
+                          type: number
+                          format: double
+                        kdaRatioRank:
+                          type: number
+                          format: integer
+                        csPerTenMinutes:
+                          type: number
+                          format: double
+                        csPerTenMinutesRank:
+                          type: number
+                          format: integer
+                        killParticipation:
+                          type: number
+                          format: double
+                        killParticipationRank:
+                          type: number
+                        mostplayedchampions:
+                          type: array
+                          maxItems: 3
+                          items:
+                            type: object
+                            additionalProperties: false
+                            required: [championId, wins, losses, total, kdaRatio]
+                            properties:
+                              championId:
+                                type: number
+                                format: integer
+                              wins:
+                                type: number
+                                format: integer
+                              losses:
+                                type: number
+                                format: integer
+                              total:
+                                type: number
+                                format: integer
+                              kdaRatio:
+                                type: number
+                                format: double
+                  playerStatsHistories:
+                    type: array
+                    description: |
+                      Displays stats from the recently played matches in that particular tournaments.
+                      The array starts with the most recently played match.
+                    maxItems: 4
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [id, playerId, championId, timestamp, assists, deaths, kills, csPerTenMinutes,
+                        kdaRatio, killParticipation, win, match, team, opponent, game]
+                      properties:
+                        id:
+                          type: string
+                          pattern: *statsHistoryId
+                        playerId:
+                          type: string
+                          pattern: *playerId
+                        championId:
+                          type: number
+                          format: integer
+                        timestamp: *timestamp
+                        assists:
+                          type: number
+                          format: integer
+                        deaths:
+                          type: number
+                          format: integer
+                        kills:
+                          type: number
+                          format: integer
+                        csPerTenMinutes:
+                          type: number
+                          format: double
+                        kdaRatio:
+                          type: number
+                          format: double
+                        killParticipation:
+                          type: number
+                          format: double
+                        win:
+                          type: boolean
+                          enum: [true, false]
+                        match:
+                          type: string
+                          description: The match ID
+                          format: *uuidRegex
+                        team:
+                          type: number
+                          format: integer
+                          description: The team ID the player playes for.
+                        opponent:
+                          type: number
+                          format: integer
+                          description: The opponent's team ID.
+                        game:
+                          type: string
+                          description: The game ID
+                          format: *uuidRegex
 
       servers: *v1
 
@@ -1979,9 +2218,7 @@ components:
       properties:
         result:
           $ref: '#/components/schemas/highlanderResult'
-        timestamp:
-          type: integer
-          description: Unix timestamp in milliseconds
+        timestamp: *timestamp
         source:
           type: string
           enum: [manual, bestOf]
@@ -2493,6 +2730,7 @@ components:
       required: [id, scheduledTime, tags, tournament, league]
       properties:
         id:
+          description: The schedule item ID.
           type: string
         scheduledTime:
           type: string
@@ -2508,34 +2746,42 @@ components:
           type: string
           description: The League ID
 
-    scheduleItem:
+    matchScheduleItem:
       allOf:
         - $ref: '#/components/schemas/baseScheduleItem'
-        - oneOf:
-          - type: object
-            additionalProperties: false
-            required: [content, match, bracket]
-            properties:
-              content:
-                type: string
-                pattern: '^urn:rg:lolesports:global:highlander:tournament:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):match:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$'
-                description: |
-                  Contains the tournament and match Ids for the specific match.
-              match:
-                type: string
-                pattern: *uuidRegex
-                description: The match ID
-              bracket:
-                type: string
-                pattern: *uuidRegex
-                description: The bracket ID
-          - type: object
-            additionalProperties: false
-            required: [content]
-            properties:
-              content:
-                type: string
-                pattern: '^{\\"imageUrl\\":null,\\"label\\":\\"(?:rebroadcast|pt1|opening-ceremony|worlds-pre-show)\\"}$'
+        - type: object
+          additionalProperties: false
+          required: [content, match, bracket]
+          properties:
+            content:
+              type: string
+              pattern: '^urn:rg:lolesports:global:highlander:tournament:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):match:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$'
+              description: |
+                Contains the tournament and match Ids for the specific match.
+            match:
+              type: string
+              pattern: *uuidRegex
+              description: The match ID
+            bracket:
+              type: string
+              pattern: *uuidRegex
+              description: The bracket ID
+
+    eventScheduleItem:
+      allOf:
+        - $ref: '#/components/schemas/baseScheduleItem'
+        - type: object
+          additionalProperties: false
+          required: [content]
+          properties:
+            content:
+              type: string
+              pattern: '^{\\"imageUrl\\":null,\\"label\\":\\"(?:rebroadcast|pt1|opening-ceremony|worlds-pre-show)\\"}$'
+
+    scheduleItem:
+      oneOf:
+        - $ref: '#/components/schemas/matchScheduleItem'
+        - $ref: '#/components/schemas/eventScheduleItem'
 
     tags:
       type: object
@@ -2712,3 +2958,11 @@ components:
       schema:
         type: string
         pattern: *uuidRegex
+
+    playerSlug:
+      name: slug
+      in: query
+      required: true
+      description: The player slug.
+      schema:
+        type: string
