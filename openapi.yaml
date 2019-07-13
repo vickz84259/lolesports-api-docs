@@ -2,7 +2,7 @@ openapi: 3.0.1
 info:
   title: Lolesports Api
   description: Unofficial documentation to the lolesports Api
-  version: 1.0.0
+  version: "1.0.0-alpha-1"
 
 tags:
   - name: leagues
@@ -17,6 +17,20 @@ tags:
   - name: match details
     description: |
       Get the full match details of a game either live or after it has occured.
+  - name: highlander
+    description: |
+      These are the old api endpoints.
+
+x-tagGroups:
+  - name: Rel Api
+    tags:
+      - leagues
+      - events
+      - teams
+      - match details
+  - name: Highlander Api
+    tags:
+      - highlander
 
 paths:
   /getLeagues:
@@ -504,6 +518,9 @@ paths:
     get:
       operationId: navItems
 
+      tags:
+        - highlander
+
       responses:
         '200':
           description: Successful request
@@ -539,6 +556,9 @@ paths:
         It is highly advised that you cache the data from this endpoint.
       operationId: videos
 
+      tags:
+        - highlander
+
       responses:
         '200':
           description: Successful request
@@ -558,6 +578,9 @@ paths:
   /highlanderTournaments:
     get:
       operationId: highlanderTournaments
+
+      tags:
+        - highlander
 
       parameters:
         - $ref: '#/components/parameters/league'
@@ -596,6 +619,9 @@ paths:
   /leagues:
     get:
       operationId: leagues
+
+      tags:
+        - highlander
 
       parameters:
         - name: query
@@ -696,6 +722,9 @@ paths:
     get:
       operationId: scheduleItems
 
+      tags:
+        - highlander
+
       parameters:
         - $ref: '#/components/parameters/highlanderLeagueId'
 
@@ -727,6 +756,9 @@ paths:
   /teams:
     get:
       operationId: teams
+
+      tags:
+        - highlander
 
       description: |
         If the `teamStatsSummaries`, `teamRosterStats` and `teamStatsHistories` keys are not present,
@@ -941,6 +973,9 @@ paths:
   /players:
     get:
       operationId: players
+
+      tags:
+        - highlander
 
       description: |
         If the `playerStatsSummaries` and `playerStatsHistories` keys are not present,
