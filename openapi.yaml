@@ -1,0 +1,2968 @@
+openapi: 3.0.1
+info:
+  title: Lolesports Api
+  description: Unofficial documentation to the lolesports Api
+  version: 1.0.0
+
+tags:
+  - name: leagues
+    description: |
+      Get information about a league, the standings and its various tournaments.
+  - name: events
+    description: |
+      Get information about ongoing, completed or upcoming events.
+  - name: teams
+    description: |
+      Get information about a team and its roster.
+  - name: match details
+    description: |
+      Get the full match details of a game either live or after it has occured.
+
+paths:
+  /getLeagues:
+    get:
+      operationId: getLeagues
+      parameters:
+        - $ref: '#/components/parameters/hl'
+
+      tags:
+        - leagues
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      leagues:
+                        type: array
+                        items:
+                          allOf:
+                            - $ref: '#/components/schemas/extendedLeague'
+                            - type: object
+                              properties:
+                                region:
+                                  description: |
+                                    Indicates which type of tournament the league is. Whether
+                                    international or a regional tournament. The region name is
+                                    given.
+                                  type: string
+
+      security:
+        - apiKeyAuth: []
+
+      servers: &esports-api-servers
+        - url: https://esports-api.lolesports.com/persisted/gw
+        - url: https://prod-relapi.ewp.gg/persisted/gw
+
+  /getSchedule:
+    get:
+      operationId: getSchedule
+      parameters:
+        - $ref: '#/components/parameters/hl'
+        - $ref: '#/components/parameters/leagueIds'
+        - $ref: '#/components/parameters/pageToken'
+
+      tags:
+        - events
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      schedule:
+                        type: object
+                        properties:
+                          updated:
+                            description: The time the data presented was last updated
+                            type: string
+                            format: date-time
+                          pages:
+                            type: object
+                            properties:
+                              older:
+                                $ref: "#/components/schemas/pageToken"
+                              newer:
+                                $ref: "#/components/schemas/pageToken"
+                          events:
+                            type: array
+                            items:
+                              allOf:
+                                - $ref: '#/components/schemas/extendedEvent'
+                                - type: object
+                                  properties:
+                                    league:
+                                      $ref: '#/components/schemas/baseLeague'
+                                    match:
+                                      type: object
+                                      properties:
+                                        teams:
+                                          type: array
+                                          items:
+                                            type: object
+                                            properties:
+                                              record:
+                                                $ref: '#/components/schemas/record'
+                                              result:
+                                                type: object
+                                                properties:
+                                                  outcome:
+                                                    $ref: '#/components/schemas/outcome'
+
+      security:
+        - apiKeyAuth: []
+
+      servers: *esports-api-servers
+
+  # Need to test if the leagueId and tournamentId work with this endpoint
+  /getLive:
+    get:
+      operationId: getLive
+      parameters:
+        - $ref: '#/components/parameters/hl'
+
+      tags:
+        - events
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      schedule:
+                        type: object
+                        properties:
+                          events:
+                            type: array
+                            description: |
+                              Array of event objects representing matches that are
+                              currently ongoing.
+
+                              This will be null if no match is taking place at that
+                              time
+                            nullable: true
+                            items:
+                              allOf:
+                                - $ref: '#/components/schemas/extendedEvent'
+                                - type: object
+                                  properties:
+                                    id:
+                                      type: string
+                                    league:
+                                      $ref: '#/components/schemas/extendedLeague'
+                                    match:
+                                      type: object
+                                      properties:
+                                        teams:
+                                          type: array
+                                          items:
+                                            type: object
+                                            properties:
+                                              slug:
+                                                $ref: '#/components/schemas/teamSlug'
+                                              record:
+                                                $ref: '#/components/schemas/record'
+                                              result:
+                                                type: object
+                                                properties:
+                                                  outcome:
+                                                    $ref: '#/components/schemas/outcome'
+
+      security:
+        - apiKeyAuth: []
+
+      servers: *esports-api-servers
+
+  /getTournamentsForLeague:
+      get:
+        operationId: getTournamentsForLeague
+        parameters:
+          - $ref: '#/components/parameters/hl'
+          - $ref: '#/components/parameters/leagueId'
+
+        tags:
+          - leagues
+
+        responses:
+          '200':
+            description: Successful request
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        leagues:
+                          type: array
+                          description: |
+                            An array of league object(s) where each object contains an array of
+                            tournaments.
+                          items:
+                            type: object
+                            properties:
+                              tournaments:
+                                type: array
+                                description: |
+                                  An array of tournament object(s) where each object describes a
+                                  specific tournament.
+                                items:
+                                  $ref: '#/components/schemas/tournament'
+
+        security:
+          - apiKeyAuth: []
+
+        servers: *esports-api-servers
+
+  /getStandings:
+    get:
+      operationId: getStandings
+      parameters:
+        - $ref: '#/components/parameters/hl'
+        - $ref: '#/components/parameters/tournamentIds'
+
+      tags:
+        - leagues
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      standings:
+                        type: array
+                        description: |
+                          Each object in the array contains details of each tournament requested.
+                        items:
+                          type: object
+                          properties:
+                            stages:
+                              type: array
+                              items:
+                                $ref: '#/components/schemas/stage'
+
+      security:
+        - apiKeyAuth: []
+
+      servers: *esports-api-servers
+
+  /getCompletedEvents:
+    get:
+      operationId: getCompletedEvents
+      parameters:
+        - $ref: '#/components/parameters/hl'
+        - $ref: '#/components/parameters/tournamentIds'
+
+      tags:
+        - events
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      schedule:
+                        type: object
+                        properties:
+                          events:
+                            type: array
+                            items:
+                              allOf:
+                                - $ref: '#/components/schemas/simpleEvent'
+                                - type: object
+                                  properties:
+                                    games:
+                                      type: array
+                                      items:
+                                        $ref: '#/components/schemas/game'
+                                    match:
+                                      type: object
+                                      properties:
+                                        type:
+                                          type: string
+                                          enum: [normal]
+
+      security:
+        - apiKeyAuth: []
+
+      servers: *esports-api-servers
+
+  /getEventDetails:
+    get:
+      operationId: getEventDetails
+      parameters:
+        - $ref: '#/components/parameters/hl'
+        - $ref: '#/components/parameters/id'
+
+      tags:
+        - events
+
+      responses:
+        '200':
+          description: Succesful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      event:
+                        allOf:
+                          - $ref: '#/components/schemas/baseEvent'
+                          - type: object
+                            properties:
+                              id:
+                                type: string
+                              type:
+                                $ref: '#/components/schemas/eventType'
+                              league:
+                                $ref: '#/components/schemas/simpleLeague'
+                              match:
+                                type: object
+                                properties:
+                                  games:
+                                    type: array
+                                    items:
+                                      $ref: '#/components/schemas/extendedGame'
+                                  strategy:
+                                    $ref: '#/components/schemas/baseStrategy'
+                                  teams:
+                                    type: array
+                                    minItems: 2
+                                    maxItems: 2
+                                    items:
+                                      type: object
+                                      properties:
+                                        id:
+                                          $ref: '#/components/schemas/teamId'
+                                        result:
+                                          $ref: '#/components/schemas/result'
+                              streams:
+                                type: array
+                                nullable: true
+                                description: |
+                                  For a live match this will contain information about various streams,
+                                  the platforms they are on and the locale.
+
+                                  Otherwise it will be null.
+                                items:
+                                  $ref: '#/components/schemas/extendedVod'
+      security:
+        - apiKeyAuth: []
+
+      servers: *esports-api-servers
+
+  /getTeams:
+    get:
+      operationId: getTeams
+      parameters:
+        - $ref: '#/components/parameters/hl'
+        - $ref: '#/components/parameters/teamSlugs'
+
+      tags:
+        - teams
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      teams:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/extendedTeam'
+
+      security:
+        - apiKeyAuth: []
+
+      servers: *esports-api-servers
+
+  /getGames:
+    get:
+      operationId: getGames
+      parameters:
+        - $ref: '#/components/parameters/hl'
+        - $ref: '#/components/parameters/gameIds'
+
+      tags:
+        - events
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      games:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/simpleGame'
+
+      security:
+        - apiKeyAuth: []
+
+      servers: *esports-api-servers
+
+  /window/{gameId}:
+    get:
+      operationId: getWindow
+      parameters:
+        - $ref: '#/components/parameters/pathGameId'
+        - $ref: '#/components/parameters/startingTime'
+
+      tags:
+        - match details
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/window'
+
+      servers: &livestats-api
+        - url: https://feed.lolesports.com/livestats/v1
+
+  /details/{gameId}:
+    get:
+      operationId: getDetails
+      parameters:
+        - $ref: '#/components/parameters/pathGameId'
+        - $ref: '#/components/parameters/startingTime'
+        - name: participantIds
+          in: query
+          description: |
+            A list of the participant Ids separated by underscores and not commas
+          schema:
+            type: string
+            pattern: '^\d{1,2}(?:_\d{1,2}){0,9}$'
+
+      tags:
+        - match details
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  frames:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/detailsFrame'
+
+      servers: *livestats-api
+
+  /navItems:
+    get:
+      operationId: navItems
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  navItems:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/navItem'
+                  leagues:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/highlanderLeague'
+
+      servers: &v1
+        - url: https://api.lolesports.com/api/v1
+
+  /videos:
+    get:
+      description: |
+        This endpoint returns details about esports vods on YouTube.
+
+        The data returned by this endpoint is fairly large (more than 5MB) since
+        it includes vods from 2015 up to (at the time of writing this) June 2019
+        and it will continue growing.
+
+        Do consider this when dealing with clients (like mobile phones) where
+        bandwidth and memory may be scarce.
+
+        It is highly advised that you cache the data from this endpoint.
+      operationId: videos
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  videos:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/video'
+
+      servers: &v2
+        - url: https://api.lolesports.com/api/v2
+
+  /highlanderTournaments:
+    get:
+      operationId: highlanderTournaments
+
+      parameters:
+        - $ref: '#/components/parameters/league'
+
+      description: |
+        If a league does not have highlanderTournament objects, the API will return 404
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/highlanderTournaments'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error:
+                    type: object
+                    required: [statusCode, message]
+                    properties:
+                      statusCode:
+                        type: integer
+                        enum: [404]
+                      message:
+                        type: string
+                        pattern: ^404 - http:\/\/highlander\.lolesports\.com\/v1\/leagues\/\d+$
+
+      servers: *v2
+
+  /leagues:
+    get:
+      operationId: leagues
+
+      parameters:
+        - name: query
+          in: query
+          description: |
+            'This endpoint requires either the id or the slug to be passed. If both are present then only the first
+            one will be considered.
+
+            _Due to a limitation in the OpenApi specification it is not possible to show the mutual exclusive nature
+            that the query parameters in this endpoint require. The schema below is as close as a representation I
+            could get in expressing the nature of the query parameters._
+
+            Check the examples below to help better understand the query parameters needed.
+
+            **Example 1**
+
+            `https://api.lolesports.com/api/v1/leagues?id=3`
+
+            This will return the details for **LEC**.
+
+            **Example 2**
+
+            `https://api.lolesports.com/api/v1/leagues?slug=worlds`
+
+            This will return the details for **Worlds**
+
+            **Example 3**
+
+            `https://api.lolesports.com/api/v1/leagues?id=3&slug=worlds`
+
+            In such a scenario where both query parameters are used only the first will be considered, hence it will
+            only return the details for **LEC**.
+
+            **Example 4**
+
+            `https://api.lolesports.com/api/v1/leagues`
+
+            This is not valid. At least one of the two query parameters (id or slug) is required.'
+          required: true
+          schema:
+            type: object
+            oneOf:
+              - type: object
+                required: [id]
+                properties:
+                  id:
+                    type: integer
+                additionalProperties: false
+              - type: object
+                required: [slug]
+                properties:
+                  slug:
+                    type: string
+                additionalProperties: false
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [leagues]
+                properties:
+                  leagues:
+                    type: array
+                    description: |
+                      This array contains information about the league retrieved.
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      $ref: '#/components/schemas/highlanderLeague'
+                  highlanderTournaments:
+                    $ref: '#/components/schemas/highlanderTournaments'
+                  highlanderRecords:
+                    $ref: '#/components/schemas/highlanderRecords'
+                  teams:
+                    $ref: '#/components/schemas/highlanderTeams'
+                  players:
+                    $ref: '#/components/schemas/highlanderPlayers'
+
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  error:
+                    type: string
+                    enum: [Invalid Input Error]
+
+      servers: *v1
+
+  /scheduleItems:
+    get:
+      operationId: scheduleItems
+
+      parameters:
+        - $ref: '#/components/parameters/highlanderLeagueId'
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  scheduleItems:
+                    type: array
+                    minItems: 0
+                    items:
+                      $ref: '#/components/schemas/scheduleItem'
+                  highlanderTournaments:
+                    $ref: '#/components/schemas/highlanderTournaments'
+                  teams:
+                    $ref: '#/components/schemas/highlanderTeams'
+                  highlanderRecords:
+                    $ref: '#/components/schemas/highlanderRecords'
+                  players:
+                    $ref: '#/components/schemas/highlanderPlayers'
+
+      servers: *v1
+
+  /teams:
+    get:
+      operationId: teams
+
+      description: |
+        If the `teamStatsSummaries`, `teamRosterStats` and `teamStatsHistories` keys are not present,
+        then the team did not take part in that particular tournament.
+
+      parameters:
+        - $ref: '#/components/parameters/teamSlug'
+        - $ref: '#/components/parameters/highlanderTournamentId'
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [players, highlanderTournaments, scheduleItems, teams]
+                properties:
+                  players:
+                    type: array
+                    description: Contains the players currently in the team.
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/highlanderPlayer'
+                        - type: object
+                          additionalProperties: false
+                          properties:
+                            teamRosterStat:
+                              type: string
+                              pattern: '^urn:rg:lolesports:global:player:player:\d+$'
+                  highlanderTournaments:
+                    $ref: '#/components/schemas/highlanderTournaments'
+                  scheduleItems:
+                    type: array
+                    description: Contains details about a few of the team's upcoming matches
+                    items:
+                      $ref: '#/components/schemas/scheduleItem'
+                  teamStatsSummaries:
+                    type: array
+                    minItems: 1
+                    maxItems: 1
+                    description: |
+                      Contains a summary of the team stats during that particular tournament.
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [teamId, kdaRatio, kdaRatioRank, averageWinLength, averageWinLengthRank,
+                        firstDragonKillRatio, firstDragonKillRatioRank, firstTowerRatio, firstTowerRatioRank,
+                        averageDamageByPosition]
+                      properties:
+                        teamId:
+                          type: string
+                          pattern: '^urn:rg:lolesports:global:team:team:\d+$'
+                          description: Contains the team ID
+                        kdaRatio:
+                          type: number
+                          format: double
+                          description: The team's KDA Ratio
+                        kdaRatioRank:
+                          type: integer
+                          format: int32
+                          description: |
+                            The position the team ranks at compared to other teams' KDA ratio
+                        averageWinLength:
+                          type: integer
+                          format: int32
+                          description: |
+                            The average length of the team's wins in seconds.
+                        averageWinLengthRank:
+                          type: integer
+                          format: int32
+                          description: |
+                            The position the team ranks at compared to other team's average win lengths.
+                        firstDragonKillRatio:
+                          type: number
+                          format: double
+                          description: |
+                            The ratio of first dragons killed by this team compared to the total first dragons killed
+                            in this team's matches.
+                        firstDragonKillRatioRank:
+                          type: integer
+                          format: int32
+                          description: |
+                            The position the teams ranks at compared to other team's first dragon kill ratio
+                        firstTowerRatio:
+                          type: number
+                          format: double
+                          description: |
+                            The ratio of first tower secured by this team compared to the total first towers secured
+                            in this team's matches.
+                        firstTowerRatioRank:
+                          type: integer
+                          format: int32
+                          description: |
+                            The position the teams ranks at compared to other team's first tower ratio.
+                        averageDamageByPosition:
+                          type: object
+                          additionalProperties: false
+                          description: |
+                            It is assumed that the values represent the damage dealt in thousands.
+                          properties:
+                            DUO_CARRY:
+                              type: integer
+                              format: int32
+                            DUO_SUPPORT:
+                              type: integer
+                              format: int32
+                            SOLO:
+                              type: integer
+                              format: int32
+                            NONE:
+                              type: integer
+                              format: int32
+                            DUO:
+                              type: integer
+                              format: int32
+                  teamRosterStats:
+                    type: array
+                    description: |
+                      Contains stats of the players of the particular team who played in that tournament.
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [playerId, gamesPlayed, averageAssists, averageDeaths, averageKillParticipation,
+                        averageKills, summonerName, championIds]
+                      properties:
+                        playerId:
+                          type: string
+                          pattern: &playerId '^urn:rg:lolesports:global:player:player:\d+$'
+                        gamesPlayed:
+                          type: integer
+                          format: int32
+                        averageAssists:
+                          type: integer
+                          format: int32
+                        averageDeaths:
+                          type: number
+                          format: double
+                        averageKillParticipation:
+                          type: number
+                          format: double
+                        averageKills:
+                          type: number
+                          format: double
+                        summonerName:
+                          type: string
+                        championIds:
+                          type: array
+                          minItems: 1
+                          maxItems: 3
+                          items:
+                            type: integer
+                            format: int32
+                  teamStatsHistories:
+                    type: array
+                    maxItems: 4
+                    description: |
+                      A contains stats of the team's previous 4 matches in that particular tournament.
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [id, timestamp, assists, deaths, kills, win, championsIds, match, team,
+                        opponent, game]
+                      properties:
+                        id:
+                          type: string
+                          pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}:\d+$'
+                          description: Contains the game ID and the team ID.
+                        timestamp: &timestamp
+                          type: integer
+                          format: int64
+                          description: 'Unix timestamp in milliseconds of when the match started.'
+                        assists:
+                          type: integer
+                          format: int32
+                        kills:
+                          type: integer
+                          format: int32
+                        win:
+                          type: boolean
+                          enum: [true, false]
+                        championIds:
+                          type: array
+                          minItems: 5
+                          maxItems: 5
+                          items:
+                            type: integer
+                            format: int32
+                        match:
+                          type: string
+                          pattern: &uuidRegex '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$'
+                          description: The match ID
+                        team:
+                          type: integer
+                          format: int32
+                          description: The team ID
+                        opponent:
+                          type: integer
+                          format: int32
+                          description: The opponent's team ID
+                        game:
+                          type: integer
+                          format: int32
+                          description: The game ID
+
+                  teams:
+                    $ref: '#/components/schemas/highlanderTeams'
+
+      servers: *v1
+
+  /players:
+    get:
+      operationId: players
+
+      description: |
+        If the `playerStatsSummaries` and `playerStatsHistories` keys are not present,
+        then the player did not take part in that particular tournament.
+
+      parameters:
+        - $ref: '#/components/parameters/playerSlug'
+        - $ref: '#/components/parameters/highlanderTournamentId'
+
+      responses:
+        '200':
+          description: Successful request
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [players, highlanderTournaments, scheduleItems, teams]
+                properties:
+                  players:
+                    type: array
+                    description: |
+                      Contains information about the player in question.
+
+                      If `playerStatsSummary` and `playerStatsHistory` are missing then the player did not take part
+                      in the tournament specificed by the tournament ID in the url.
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/highlanderPlayer'
+                        - type: object
+                          additionalProperties: false
+                          required: [starterOnTeams, subOnTeams, teams, photoInformation, scheduleItems]
+                          properties:
+                            starterOnTeams:
+                              type: array
+                              description: |
+                                The IDs of the team(s) this player is/has been on the starting
+                                lineup
+                              items:
+                                type: integer
+                            subOnTeams:
+                              type: array
+                              description: |
+                                The IDs of the team(s) this player is/has been on as a sub player
+                              items:
+                                type: integer
+                            teams:
+                              type: array
+                              description: |
+                                A combination of the teamIDs in `starterOnTeams` and `subOnTeams`
+                              items:
+                                type: integer
+                            photoInformation:
+                              type: object
+                              additionalProperties: false
+                              required: [width, height, type, url, transferred, size, time]
+                              properties:
+                                width:
+                                  type: integer
+                                  description: The width of the image in pixels.
+                                height:
+                                  type: integer
+                                  description: The height of the image in pixels.
+                                type:
+                                  type: string
+                                  description: The image's file format.
+                                url:
+                                  type: string
+                                  description: URL to the player's photo.
+                                transferred:
+                                  type: integer
+                                size:
+                                  type: integer
+                                  description: Size of the image in bytes
+                                time:
+                                  type: float
+                            scheduleItems:
+                              type: array
+                              description: |
+                                Contains the ids to schedule items representing the player's/team's next matches.
+
+                                This is regardless of the tournament ID passed in the url.
+                              maxItems: 4
+                              items:
+                                type: string
+                            playerStatsSummary:
+                              type: string
+                              pattern: '^urn:rg:lolesports:global:player:player:\d+$'
+                            playerStatsHistory:
+                              type: array
+                              description: |
+                                Contains the `playerStatsHistory` IDs, which are just the game ID of the match and the player
+                                ID separated by a colon.
+
+                                Contains the last 4 played matches in the specified tournament. The first ID is of the most
+                                recently played match.
+                              maxItems: 4
+                              items:
+                                type: string
+                                pattern: &statsHistoryId '^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}:\d+$'
+                  highlanderTournaments:
+                    type: array
+                    description: |
+                      Contains the various tournaments the player has participated in.
+                    items:
+                      $ref: '#/components/schemas/highlanderTournament'
+                  scheduleItems:
+                    type: array
+                    maxItems: 4
+                    description: |
+                      Contains details about the next 4 matches the player's team is schedule to participate in.
+                    items:
+                      $ref: '#/components/schemas/matchScheduleItem'
+                  teams:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/highlanderTeam'
+                  playerStatsSummaries:
+                    type: array
+                    description: |
+                      The stats displayed here are for the player during the tournament specified in the url
+                    minItems: 1
+                    maxItems: 1
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [playerId, kdaRatio, kdaRatioRank, csPerTenMinutes, csPerTenMinutesRank, killParticipation,
+                        killParticipationRank, mostplayedchampions]
+                      properties:
+                        playerId:
+                          type: string
+                          pattern: *playerId
+                        kdaRatio:
+                          type: number
+                          format: double
+                        kdaRatioRank:
+                          type: number
+                          format: integer
+                        csPerTenMinutes:
+                          type: number
+                          format: double
+                        csPerTenMinutesRank:
+                          type: number
+                          format: integer
+                        killParticipation:
+                          type: number
+                          format: double
+                        killParticipationRank:
+                          type: number
+                        mostplayedchampions:
+                          type: array
+                          maxItems: 3
+                          items:
+                            type: object
+                            additionalProperties: false
+                            required: [championId, wins, losses, total, kdaRatio]
+                            properties:
+                              championId:
+                                type: number
+                                format: integer
+                              wins:
+                                type: number
+                                format: integer
+                              losses:
+                                type: number
+                                format: integer
+                              total:
+                                type: number
+                                format: integer
+                              kdaRatio:
+                                type: number
+                                format: double
+                  playerStatsHistories:
+                    type: array
+                    description: |
+                      Displays stats from the recently played matches in that particular tournaments.
+                      The array starts with the most recently played match.
+                    maxItems: 4
+                    items:
+                      type: object
+                      additionalProperties: false
+                      required: [id, playerId, championId, timestamp, assists, deaths, kills, csPerTenMinutes,
+                        kdaRatio, killParticipation, win, match, team, opponent, game]
+                      properties:
+                        id:
+                          type: string
+                          pattern: *statsHistoryId
+                        playerId:
+                          type: string
+                          pattern: *playerId
+                        championId:
+                          type: number
+                          format: integer
+                        timestamp: *timestamp
+                        assists:
+                          type: number
+                          format: integer
+                        deaths:
+                          type: number
+                          format: integer
+                        kills:
+                          type: number
+                          format: integer
+                        csPerTenMinutes:
+                          type: number
+                          format: double
+                        kdaRatio:
+                          type: number
+                          format: double
+                        killParticipation:
+                          type: number
+                          format: double
+                        win:
+                          type: boolean
+                          enum: [true, false]
+                        match:
+                          type: string
+                          description: The match ID
+                          format: *uuidRegex
+                        team:
+                          type: number
+                          format: integer
+                          description: The team ID the player playes for.
+                        opponent:
+                          type: number
+                          format: integer
+                          description: The opponent's team ID.
+                        game:
+                          type: string
+                          description: The game ID
+                          format: *uuidRegex
+
+      servers: *v1
+
+components:
+  schemas:
+    pageToken:
+      description: &pagetoken |
+        Base 64 encoded string used to determine the
+        next "page" of data to pull
+      type: string
+      format: byte
+      nullable: true
+
+    baseLeague:
+      type: object
+      required: [name, slug]
+      additionalProperties: false
+      properties:
+        name: &leagueName
+          type: string
+          description: The name of the league
+          minLength: 1
+        slug:
+          type: string
+          description: URL friendly version of the league's name
+          minLength: 1
+
+    simpleLeague:
+      allOf:
+        - $ref: '#/components/schemas/baseLeague'
+        - type: object
+          properties:
+            id:
+              description: The league's ID
+              type: string
+            image:
+              description: URL to an image of the League's logo
+              type: string
+              minLength: 1
+
+    extendedLeague:
+      allOf:
+        - $ref: '#/components/schemas/simpleLeague'
+        - type: object
+          properties:
+            priority:
+              description: Unknown
+              type: integer
+
+    highlanderLeague:
+      allOf:
+        - $ref: '#/components/schemas/baseLeague'
+        - type: object
+          required: [id, guid, region, drupalId, logoUrl, createdAt, updatedAt, abouts, names]
+          additionalProperties: false
+          properties:
+            id:
+              description: The league's ID
+              type: integer
+            guid:
+              description: |
+                The [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier) for the league.
+              type: string
+            region:
+              type: string
+            drupalId:
+              type: integer
+              nullable: true
+            logoUrl:
+              type: string
+            createdAt: &createdAt
+              type: string
+              description: The date and time when this entry was created.
+              format: date-time
+            updatedAt: &updatedAt
+              type: string
+              description: The date and time when this entry was last updated.
+              format: date-time
+            # Add example to better explain this property
+            abouts:
+              type: object
+              description: |
+                Contains a description of the league translated in various languages.
+
+                The keys are presented in the format ([ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1)
+                and [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))
+
+                `{languageCode}_{countryCode}`
+
+                The value is a string containing
+                html tags representing the description in that specific locale.
+              minProperties: 0
+              additionalProperties:
+                type: string
+            names:
+              type: object
+              description: |
+                Contains the names of the league translated in various languages.
+
+                The keys are presented in the format ([ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1)
+                and [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))
+
+                `{languageCode}_{countryCode}`
+
+                The value is a string containing
+                the name of the league in that specific locale.
+              minProperties: 0
+              additionalProperties:
+                type: string
+            tournaments:
+              type: array
+              description: |
+                An array containing the [UUIDs](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+                for the tournaments in this league.
+              items:
+                type: string
+                pattern: *uuidRegex
+
+    record:
+      type: object
+      nullable: true
+      description: |
+        Describes the amount of wins and losses the team has incurred
+        in a particular stage of the tournament specifically group stage
+
+        For knockout phase, each series is treated individually.
+
+        This object is null when the match is ongoing and it is in the
+        knockout stage.
+      properties:
+        losses:
+          type: integer
+          minLength: 1
+        wins:
+          type: integer
+          minLength: 1
+
+    result:
+      type: object
+      properties:
+        gameWins:
+          type: integer
+          description: |
+            The number of games the team has won in that
+            in the series
+          minLength: 1
+
+    outcome:
+      type: string
+      nullable: true
+      description: |
+        Indicate whether the team won or lost the series
+
+        This will be null if the match is ongoing
+      enum: [loss, win]
+
+    team:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+        image:
+          type: string
+          minLength: 1
+        name:
+          type: string
+          minLength: 1
+
+    customTeam:
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/teamId'
+        side:
+          type: string
+          enum: [blue, red]
+
+    extendedTeam:
+      allOf:
+        - $ref: '#/components/schemas/team'
+        - type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/teamId'
+            slug:
+              $ref: '#/components/schemas/teamSlug'
+            alternativeImage:
+              type: string
+              minLength: 1
+            homeLeague:
+              $ref: '#/components/schemas/homeLeague'
+            players:
+              type: array
+              items:
+                $ref: '#/components/schemas/player'
+
+    homeLeague:
+      type: object
+      properties:
+        name: *leagueName
+        region:
+          type: string
+          description: The region where the league is located
+
+    teamSlug:
+      type: string
+      description: The URL friendly version of the team name
+
+    teamId:
+      type: string
+      description: The team id
+
+    baseStrategy:
+      type: object
+      properties:
+        count:
+          type: integer
+          enum: [1, 3, 5]
+
+    strategy:
+      allOf:
+        - $ref: '#/components/schemas/baseStrategy'
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [bestOf]
+
+    teams:
+      type: array
+      minItems: 2
+      maxItems: 2
+      items:
+        $ref: '#/components/schemas/team'
+
+    baseMatch:
+      type: object
+      properties:
+        teams:
+          $ref: '#/components/schemas/teams'
+
+    simpleMatch:
+      allOf:
+        - $ref: '#/components/schemas/baseMatch'
+        - type: object
+          properties:
+            id:
+              description: The match id
+              type: string
+
+    state:
+      type: string
+      enum: [completed, unstarted, inProgress]
+
+    eventType:
+      type: string
+      enum: [match, show]
+
+    baseEvent:
+      type: object
+      properties:
+        match:
+          $ref: '#/components/schemas/baseMatch'
+
+    simpleEvent:
+      type: object
+      properties:
+        startTime:
+          type: string
+          description: The time the match started
+          format: date-time
+        blockName:
+          type: string
+          nullable: true
+        match:
+          allOf:
+            - $ref: '#/components/schemas/simpleMatch'
+            - type: object
+              properties:
+                strategy:
+                  $ref: '#/components/schemas/strategy'
+                teams:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      result:
+                        $ref: '#/components/schemas/result'
+
+    extendedEvent:
+      allOf:
+        - $ref: '#/components/schemas/simpleEvent'
+        - type: object
+          properties:
+            state:
+              $ref: '#/components/schemas/state'
+            type:
+              $ref: '#/components/schemas/eventType'
+
+    tournament:
+      type: object
+      properties:
+        endDate:
+          type: string
+          description: The date the tournament ends/ended.
+          format: full-date
+        id:
+          type: string
+          description: This is the tournament id
+        slug:
+          type: string
+        startDate:
+          type: string
+          description: The date the tournament starts/started.
+          format: full-date
+
+    stage:
+      type: object
+      description: |
+        Represents a stage in a tournament.
+
+        Whether it is the group or knockout stage.
+      properties:
+          name:
+            type: string
+            description: The name of that stage of the tournament
+          type:
+            type: string
+            description: The type of the stage.
+            enum: [groups, bracket]
+          slug:
+            type: string
+          sections:
+            type: array
+            description: |
+              Each object in the array represents a particular round in that
+              specific stage in the tournament.
+
+              For the knockout stages, we could have the quarter finals,
+              semi finals and the finals under their own sections.
+
+              For the group stage, there is usually only one section.
+            items:
+              $ref: '#/components/schemas/section'
+
+    section:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the section
+        matches:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/simpleMatch'
+              - type: object
+                properties:
+                  state:
+                    $ref: '#/components/schemas/state'
+                  previousMatchIds:
+                    type: array
+                    description: |
+                      This stores the previous match ids for the teams in the current
+                      match were involved in.
+
+                      For group stages this is usually null. For bracket stage it is
+                      used to indicate the matches that were played before the match
+                      in question.
+                    nullable: true
+                    items:
+                      type: string
+                  flags:
+                  # Test this to see if it ever contains any other value apart from null
+                    type: string
+                    nullable: true
+                    description: |
+                      The purpose of this key is unknown. So far the only value it
+                      has seems to be null.
+                  teams:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          $ref: '#/components/schemas/teamId'
+                        slug:
+                          $ref: '#/components/schemas/teamSlug'
+                        result:
+                          $ref: '#/components/schemas/result'
+        rankings:
+          type: array
+          description: |
+            Contains details about the actual standings for that particular
+            section
+
+            This is mostly used for the group stage. For the knockout stages, it
+            is usually empty.
+          items:
+            $ref: '#/components/schemas/ranking'
+
+    ranking:
+      type: object
+      properties:
+        ordinal:
+          type: integer
+          description: The league position
+        teams:
+          type: array
+          description: |
+            The teams that are at that league position.
+
+            In most cases there will only be one team object in this array. In
+            cases where several teams are tied with the same score, this array will
+            contain all teams tied for that position.
+          items:
+            allOf:
+              - $ref: '#/components/schemas/team'
+              - type: object
+                properties:
+                  id:
+                    $ref: '#/components/schemas/teamId'
+                  slug:
+                    $ref: '#/components/schemas/teamSlug'
+                  record:
+                    $ref: '#/components/schemas/record'
+
+    game:
+      type: object
+      properties:
+        vods:
+          type: array
+          items:
+            $ref: '#/components/schemas/vod'
+
+    simpleGame:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The game ID
+        state:
+          $ref: '#/components/schemas/state'
+        number:
+          type: integer
+          description: The number of the game
+          enum: [1, 2, 3, 4, 5]
+        vods:
+          type: array
+          items:
+            $ref: '#/components/schemas/extendedVod'
+
+    extendedGame:
+      allOf:
+        - $ref: '#/components/schemas/simpleGame'
+        - type: object
+          properties:
+            teams:
+              type: array
+              items:
+                $ref: '#/components/schemas/customTeam'
+
+    vod:
+      type: object
+      properties:
+        parameter:
+          type: string
+
+    extendedVod:
+      allOf:
+        - $ref: '#/components/schemas/vod'
+        - type: object
+          properties:
+            locale:
+              $ref: '#/components/schemas/locale'
+            provider:
+              type: string
+              description: |
+                The platform that is hosting the vod
+              enum: [youtube, twitch]
+            offset:
+              type: integer
+              description: Purpose Unknown
+
+    locale:
+      type: string
+      description: |
+        This is the locale or language code using [ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1)
+        and [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2)
+      enum: [en-US, en-GB, en-AU, cs-CZ, de-DE, el-GR, es-ES,
+        es-MX, fr-FR, hu-HU, it-IT, pl-PL, pt-BR, ro-RO, ru-RU,
+        tr-TR, ja-JP, ko-KR]
+
+    player:
+      type: object
+      properties:
+        id:
+          type: string
+        summonerName:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        image:
+          type: string
+        role:
+          type: string
+
+    window:
+      type: object
+      properties:
+        esportsGameId:
+          type: string
+          description: The game Id of the match
+        esportsMatchId:
+          type: string
+          description: The match Id of the match
+        gameMetadata:
+          $ref: '#/components/schemas/gameMetadata'
+        frames:
+          type: array
+          items:
+            $ref: '#/components/schemas/windowFrame'
+
+    gameMetadata:
+      type: object
+      properties:
+        patchVersion:
+          type: string
+          description: The patch the match was played on
+        blueTeamMetadata:
+          $ref: '#/components/schemas/teamMetadata'
+        redTeamMetadata:
+          $ref: '#/components/schemas/teamMetadata'
+
+    teamMetadata:
+      type: object
+      properties:
+        esportsTeamId:
+          type: string
+          description: The team Id
+        participantMetadata:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/participantMetadata'
+              - $ref: '#/components/schemas/participantMetadataExtended'
+
+    participantMetadata:
+      type: object
+      properties:
+        participantId:
+          $ref: '#/components/schemas/participantId'
+        summonerName:
+          type: string
+        championId:
+          type: string
+        role:
+          type: string
+          enum: [top, jungle, mid, bottom, support]
+
+    participantMetadataExtended:
+      allOf:
+        - $ref: '#/components/schemas/participantMetadata'
+        - type: object
+          properties:
+            esportsPlayerId:
+              type: string
+
+    participantId:
+      type: integer
+      enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+    baseFrame:
+      type: object
+      properties:
+        rfc460Timestamp:
+          type: string
+          format: date-time
+
+    windowFrame:
+      allOf:
+        - $ref: '#/components/schemas/baseFrame'
+        - type: object
+          properties:
+            rfc460Timestamp:
+              type: string
+              format: date-time
+            gameState:
+              type: string
+              enum: [in_game, finished]
+            blueTeam:
+              $ref: '#/components/schemas/teamStats'
+            redTeam:
+              $ref: '#/components/schemas/teamStats'
+
+    detailsFrame:
+      allOf:
+        - $ref: '#/components/schemas/baseFrame'
+        - type: object
+          properties:
+            participants:
+              type: array
+              minItems: 1
+              maxItems: 10
+              items:
+                $ref: '#/components/schemas/extendedParticipantStats'
+
+    teamStats:
+      type: object
+      properties:
+        totalGold:
+          type: integer
+        inhibitors:
+          type: integer
+        towers:
+          type: integer
+        barons:
+          type: integer
+        totalKills:
+          type: integer
+        dragons:
+          type: array
+          items:
+            type: string
+            enum: [ocean, mountain, infernal, cloud, elder]
+        participants:
+          type: array
+          maxItems: 5
+          items:
+            $ref: '#/components/schemas/participantStats'
+
+    baseParticipantStats:
+      type: object
+      properties:
+        participantId:
+          $ref: '#/components/schemas/participantId'
+        level:
+          type: integer
+        kills:
+          type: integer
+        deaths:
+          type: integer
+        assists:
+          type: integer
+        creepScore:
+          type: integer
+
+    participantStats:
+      allOf:
+        - $ref: '#/components/schemas/baseParticipantStats'
+        - type: object
+          properties:
+            totalGold:
+              type: integer
+            currentHealth:
+              type: integer
+            maxHealth:
+              type: integer
+
+    extendedParticipantStats:
+      allOf:
+        - $ref: '#/components/schemas/participantStats'
+        - type: object
+          properties:
+            totalGoldEarned:
+              type: integer
+            killParticipation:
+              type: number
+              format: float
+            championDamageShare:
+              type: number
+              format: float
+            wardsPlaced:
+              type: integer
+            wardsDestroyed:
+              type: integer
+            attackDamage:
+              type: integer
+            abilityPower:
+              type: integer
+            criticalChance:
+              type: number
+              format: float
+            attackSpeed:
+              type: integer
+            lifeSteal:
+              type: integer
+            armor:
+              type: integer
+            magicResistance:
+              type: integer
+            tenacity:
+              type: number
+              format: float
+            items:
+              type: array
+              maxItems: 7
+              description: |
+                Contains the item Ids of the items in the inventory
+              items:
+                type: integer
+            perkMetadata:
+              $ref: '#/components/schemas/perkMetadata'
+            abilities:
+              $ref: '#/components/schemas/abilities'
+
+    perkMetadata:
+      type: object
+      properties:
+        styleId:
+          type: integer
+          description: |
+            The id of the primary rune path
+          enum: [8000, 8100, 8200, 8300, 8400]
+        subStyleId:
+          type: integer
+          description: |
+            The id of the secondary rune path
+          enum: [8000, 8100, 8200, 8300, 8400]
+        perks:
+          type: array
+          minItems: 9
+          maxItems: 9
+          description: |
+            The runes selected.
+
+            Index 0 - 3 are the ids of the primary runes
+            Index 4 - 5 are the ids of the secondary runes
+            Index 6 - 8 are the ids of the stats shard
+          items:
+            type: integer
+
+    abilities:
+      type: array
+      description: |
+        Contains the abilities the summoner levelled up at each level
+      maxItems: 18
+      enum: [Q, W, E, R]
+      items:
+        type: string
+
+    navItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        link:
+          type: string
+        slug:
+          type: string
+          nullable: true
+        label:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        order:
+          type: integer
+        external:
+          type: boolean
+        parentNavItem:
+          allOf:
+            - $ref: '#/components/schemas/navItem'
+            - type: object
+              nullable: true
+        createdAt: *createdAt
+        updatedAt: *updatedAt
+
+    video:
+      type: object
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+          nullable: true
+        label:
+          type: string
+          nullable: true
+        locale:
+          type: string
+          description: |
+            The video's locale. The value is a [ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1)
+            language code.
+        reference:
+          type: string
+          pattern: '^urn:rg:lolesports:global:highlander:tournament:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):game:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$'
+          description: |
+            Contains the tournament Id and the game Id of that match.
+        source:
+          type: string
+          description: |
+            URL to the YouTube video of the match
+        createdAt: *createdAt
+        updatedAt: *updatedAt
+        game:
+          $ref: '#/components/schemas/gameId'
+
+    gameId:
+      type: string
+      description: |
+        The game Id of the match.
+
+        It is a [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+      pattern: *uuidRegex
+
+    highlanderTournaments:
+      type: array
+      items:
+        $ref: '#/components/schemas/highlanderTournament'
+
+    highlanderTournament:
+      type: object
+      required: [id, title, description, leagueReference, roles, queues, published, rosters,
+        brackets, liveMatches, startDate, endDate, platformIds, gameIds,
+        leagueId, league]
+      properties:
+        id:
+          type: string
+          pattern: *uuidRegex
+          description: |
+            The tournament Id
+
+            It is a [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+        title:
+          type: string
+          description: URL friendly version of the tournament name
+        description:
+          type: string
+          description: The tournament's name
+        leagueReference:
+          type: string
+          pattern: &leagueReference '^urn:rg:lolesports:global:league:league:\d+$'
+          description: The integer in the string represents the league ID.
+        roles:
+          $ref: '#/components/schemas/roles'
+        bracketType:
+          $ref: '#/components/schemas/bracketType'
+        matchType:
+          $ref: '#/components/schemas/matchType'
+        rosteringStrategy:
+          $ref: '#/components/schemas/rosteringStrategy'
+        seedingStrategy:
+          $ref: '#/components/schemas/rosteringStrategy'
+        queues:
+          type: object
+          minProperties: 0
+        rosters:
+          type: object
+          description: |
+            The keys to this object are [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+            representing the roster ID.
+
+            Their values are objects but they don't contain anything useful about the roster.
+          additionalProperties:
+            type: object
+            required: [id, name, roles, teamReference, substitutions, team]
+            properties:
+              id:
+                type: string
+                pattern: *uuidRegex
+                description: |
+                  The roster ID.
+
+                  It is a [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+              state:
+                type: string
+                enum: [eliminated]
+              name:
+                type: string
+                description: The abbreviated version of the team's name.
+              roles:
+                type: object
+                minProperties: 0
+              teamReference:
+                type: string
+                pattern: '^urn:rg:lolesports:global:team:team:\d+$'
+              substitutions:
+                type: object
+                minProperties: 0
+              team:
+                type: string
+                pattern: '^\d+$'
+                description: The Team ID
+        published:
+          type: boolean
+          enum: [true, false]
+          description: |
+            If the value is true then the league/tournament has concluded, otherwise it is ongoing.
+        breakpoints:
+          $ref: '#/components/schemas/breakpoints'
+        brackets:
+          $ref: '#/components/schemas/brackets'
+        standings:
+          $ref: '#/components/schemas/standings'
+        liveMatches:
+          type: array
+          description: |
+            The array contains [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier) Match IDs
+
+            Despite the name of this property it is unreliable as for some tournaments this array will
+            contain match IDs yet the matches are over.
+          items:
+            type: string
+            pattern: *uuidRegex
+        startDate:
+          type: string
+          description: The day the tournament starts/started.
+          format: date
+        endDate:
+          type: string
+          description: The day the tournament ends/ended.
+          format: date
+        platformIds:
+          type: array
+          description: |
+            Contains all the platform IDs in for this tournaments.
+
+            A platform ID is combination of the gameRealm and the gameId.
+            The regex below describes the format.
+
+            `^[A-Z]+\d+:\d+$`
+          items:
+            type: string
+        gameIds:
+          type: array
+          description: |
+            'Contains all the gameIds in this tournament.
+
+            **Note:** The gameIds are in the format [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)'
+          items:
+            type: string
+        leagueId:
+          type: string
+          description: The league ID
+          pattern: '^\d+$'
+        league:
+          type: string
+          description: The league ID
+          pattern: '^\d+$'
+
+    rosteringStrategy:
+      type: object
+      required: [identifier]
+      properties:
+        identifier:
+          type: string
+          enum: [passthru, random]
+
+    roles:
+      type: object
+      required: [creator, owner]
+      properties:
+        creator: &roleArray
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/role'
+        owner: *roleArray
+
+    role:
+      type: object
+      required: [origin, region, summonerName, summonerLevel, profileIconId, admin]
+      properties:
+        origin:
+          type: string
+          enum: [BEARER_TOKEN]
+        region:
+          type: string
+          enum: [global]
+        summonerName:
+          type: string
+          enum: [test-user]
+        summonerLevel:
+          type: integer
+          enum: [0]
+        profileIconId:
+          type: integer
+          enum: [0]
+        admin:
+          type: boolean
+          enum: [true]
+
+    simpleRoster:
+      type: object
+      properties:
+        roster:
+          type: string
+          pattern: *uuidRegex
+          description: The roster ID
+
+    breakpoints:
+    # Give more information on this....
+      type: object
+      description: |
+        The keys to this object are [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+        representing the roster ID.
+      additionalProperties:
+        type: object
+        required: [id, name, position, input, scores, roles, generator]
+        properties:
+          id:
+            type: string
+            pattern: *uuidRegex
+            description: The breakpoint's ID
+          name:
+            type: string
+          position:
+            type: integer
+          input:
+            type: array
+            items:
+              allOf:
+                - $ref: '#/components/schemas/simpleRoster'
+                - type: object
+                  properties:
+                    bracket:
+                      type: string
+                      pattern: *uuidRegex
+                      description: The bracket ID
+                    standing:
+                      type: integer
+          standings:
+            $ref: '#/components/schemas/standings'
+          scores:
+            $ref: '#/components/schemas/scores'
+          roles:
+            $ref: '#/components/schemas/roles'
+          generator:
+            type: object
+            properties:
+              identifier:
+                type: string
+                enum: [noop]
+
+    standings:
+      type: object
+      required: [result, timestamp, closed]
+      properties:
+        result:
+          $ref: '#/components/schemas/highlanderResult'
+        timestamp: *timestamp
+        source:
+          type: string
+          enum: [manual, bestOf]
+          description: How the record was created/updated.
+        note:
+          type: string
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/standings'
+        closed:
+          type: boolean
+          description: |
+            If the value is true then the league/tournament has concluded, otherwise it is ongoing.
+          enum: [true, false]
+
+    highlanderResult:
+      type: array
+      items:
+        type: array
+        items:
+          $ref: '#/components/schemas/simpleRoster'
+
+    brackets:
+      type: object
+      description: |
+        The keys to this object are [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+        representing the bracket ID.
+      additionalProperties:
+        type: object
+        required: [id, name, position, groupPosition, canManufacture, state,
+          matches, roles, scores, matchScores]
+        properties:
+          id:
+            type: string
+            pattern: *uuidRegex
+            description: The bracket ID.
+          name:
+            type: string
+            description: The name of the bracket
+          position:
+            type: integer
+          groupPosition:
+            type: integer
+          groupName:
+            type: string
+          canManufacture:
+            type: boolean
+          state: &highlanderState
+            type: string
+            enum: [resolved, unresolved, unlinked]
+            description: |
+              Whether it is ongoing or completed.
+
+              This is unreliable since some tournaments have the state unresolved yet they concluded
+              a long time ago.
+          bracketType:
+            $ref: '#/components/schemas/bracketType'
+          matchType:
+            $ref: '#/components/schemas/matchType'
+          gameMode:
+            $ref: '#/components/schemas/gameMode'
+          input:
+            type: array
+            items:
+              allOf:
+                - $ref: '#/components/schemas/simpleRoster'
+                - type: object
+                  properties:
+                    breakpoint:
+                      type: string
+                      pattern: *uuidRegex
+                      description: The breakpoint ID
+                    standing:
+                      type: integer
+          matches:
+            type: object
+            description: |
+              The keys to this object are [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+              representing the match ID.
+            additionalProperties:
+              $ref: '#/components/schemas/highlanderMatch'
+          standings:
+            $ref: '#/components/schemas/standings'
+          inheritableMatchScoringStrategy:
+            $ref: '#/components/schemas/scoring'
+          roles:
+            $ref: '#/components/schemas/roles'
+          scoring:
+            $ref: '#/components/schemas/scoring'
+          scores:
+            $ref: '#/components/schemas/scores'
+          matchScoring:
+            $ref: '#/components/schemas/scoring'
+          matchScores:
+            $ref: '#/components/schemas/scores'
+
+    bracketType:
+      type: object
+      required: [identifier]
+      properties:
+        identifier:
+          type: string
+          enum: [round_robin, single_elim, gauntlet, bestOf]
+        options:
+          type: object
+          required: [rounds]
+          properties:
+            rounds:
+              type: string
+              pattern: '^\d+$'
+
+    matchType:
+      type: object
+      required: [identifier]
+      properties:
+        identifier:
+          type: string
+          enum: [bestOf, single_elim]
+        options:
+          type: object
+          required: [best_of]
+          properties:
+            best_of:
+              type: string
+              pattern: '^\d+$'
+
+    gameMode:
+      type: object
+      required: [identifier, requiredPlayers, mapName]
+      properties:
+        identifier:
+          type: string
+          enum: [lol:duel, lol:classic]
+        requiredPlayers:
+          type: integer
+          enum: [1, 5]
+        mapName:
+          type: string
+          enum: [summoner_rift, howling_abyss]
+
+    highlanderMatch:
+      type: object
+      required: [id, name, position, state, groupPosition, input, games,
+        tiebreaker, remadeGames, roles, scores]
+      properties:
+        id:
+          type: string
+          pattern: *uuidRegex
+          description: The match ID
+        name:
+          type: string
+        position:
+          type: integer
+        state:
+          <<: *highlanderState
+          description: |
+            Whether it is ongoing or completed.
+        groupPosition:
+          type: integer
+        matchType:
+          $ref: '#/components/schemas/matchType'
+        gameMode:
+          $ref: '#/components/schemas/gameMode'
+        input: &matchInput
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/simpleRoster'
+              - oneOf:
+                - type: object
+                  properties:
+                    match:
+                      type: string
+                      pattern: *uuidRegex
+                      description: The match ID
+                - type: object
+                  properties:
+                    breakpoint:
+                      type: string
+                      pattern: *uuidRegex
+                      description: The breakpoint ID
+              - type: object
+                properties:
+                  standing:
+                    type: integer
+
+        games:
+          type: object
+          description: |
+            The keys to this object are [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+            representing the game ID.
+
+            These are the games played in that series.
+
+            The number of properties(key and value pair) in this object will be equal to the type of series that was
+            played. For a best of 1 there will be only 1 game, 3 for best of 3s and 5 for best of 5s.
+          additionalProperties:
+            $ref: '#/components/schemas/highlanderGame'
+        standings:
+          $ref: '#/components/schemas/standings'
+        tiebreaker:
+          type: boolean
+          enum: [true, false]
+        remadeGames:
+          type: array
+          items:
+            $ref: '#/components/schemas/highlanderGame'
+        roles:
+          $ref: '#/components/schemas/roles'
+        scoring:
+          $ref: '#/components/schemas/scoring'
+        scores:
+          $ref: '#/components/schemas/scores'
+
+
+    highlanderGame:
+      type: object
+      required: [id, name, generatedName, input, scores, revision, roles]
+      properties:
+        id:
+          $ref: '#/components/schemas/gameId'
+        name:
+          type: string
+        generatedName:
+          type: string
+        state:
+          type: string
+          enum: [remade]
+        gameMode:
+          $ref: '#/components/schemas/gameMode'
+        input: *matchInput
+        standings:
+          $ref: '#/components/schemas/standings'
+        scores:
+          $ref: '#/components/schemas/scores'
+        gameId:
+          type: string
+          pattern: '^\d+$'
+          description: |
+            The numeric version of the game ID
+
+            This is what is used to access the ACS endpoint.
+        gameRealm:
+          type: string
+          pattern: '^[A-Z]+\d+$'
+          description: |
+            The ID of the tournament realm on which the game was played on
+        platformId:
+          type: string
+          pattern: '^[A-Z]+\d+:\d+$'
+          description:
+            A combination of the gameRealm and the gameId
+        revision:
+          type: integer
+        roles:
+          $ref: '#/components/schemas/roles'
+
+    scoring:
+      type: object
+      required: [identifier, options]
+      properties:
+        identifier:
+          type: string
+          description: '**Note:** The `LegacyScoringStrategy` value has only been found in the 2015 worlds championship.'
+          enum: [standard, LegacyScoringStrategy]
+        options:
+          type: object
+          required: [points]
+          properties:
+            points:
+              type: array
+              minItems: 2
+              maxItems: 2
+              items:
+                type: integer
+
+    scores:
+      type: object
+      minProperties: 0
+      description: |
+        The keys to this object are [UUID version 4](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+        representing the roster ID.
+      additionalProperties:
+        type: integer
+
+    highlanderRecords:
+      type: array
+      items:
+        $ref: '#/components/schemas/highlanderRecord'
+
+    highlanderRecord:
+      type: object
+      additionalProperties: false
+      required: [wins, losses, ties, score, roster, tournament, bracket, id]
+      properties:
+        wins:
+          type: integer
+        losses:
+          type: integer
+        ties:
+          type: integer
+        score:
+          type: integer
+        roster: &uuidObject
+          type: string
+          description: The roster's [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+          pattern: *uuidRegex
+        tournament:
+          <<: *uuidObject
+          description: The tournament's [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+        bracket:
+          <<: *uuidObject
+          description: The bracket's [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier)
+        id:
+          type: string
+          description: |
+            A combination of the bracket and roster UUIDs. The two are separated by a colon\
+          pattern: '^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$'
+
+    highlanderTeam:
+      type: object
+      additionalProperties: false
+      required: [id, slug, name, guid, teamPhotoUrl, logoUrl, acronym, homeLeague,
+        altLogoUrl, createdAt, updatedAt, bios, foreignIds, players, starters, subs]
+      properties:
+        id:
+          type: integer
+          description: The team ID.
+        slug:
+          type: string
+          description: URL friendly version of the team name.
+        name:
+          type: string
+          description: The team name.
+        guid:
+          type: string
+          description: The team's [UUID](https://en.wikipedia.org/wiki/Universally_unique_identifier).
+          pattern: *uuidRegex
+        teamPhotoUrl:
+          type: string
+          nullable: true
+        logoUrl:
+          type: string
+          description: URL to an image of the team's logo.
+        acronym:
+          type: string
+          description: The acronym form of the team name
+        homeLeague:
+          type: string
+          description: |
+            Describes the league this team participates in during the regular seasons.
+          pattern: *leagueReference
+        altLogoUrl:
+          type: string
+          nullable: true
+          description: Alternative URL to the team's logo.
+        createdAt: *createdAt
+        updatedAt: *updatedAt
+        bios:
+          type: object
+          description: |
+            Contains a description of the team translated to various languages.
+
+            The keys are presented in the format ([ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1)
+            and [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))
+
+            `{languageCode}_{countryCode}`
+
+            The value is a string containing
+            html tags representing the description in that specific locale.
+          additionalProperties:
+            type: string
+        foreignIds:
+          $ref: '#/components/schemas/foreignIds'
+        players:
+          type: array
+          description: An array containing the player IDs for those belonging in that team.
+          items:
+            type: integer
+        starters:
+          type: array
+          description: An array of the player IDs of those in the main roster
+          items:
+            type: integer
+        subs:
+          type: array
+          description: An array of the player IDs of the subs.
+          items:
+            type: integer
+
+    foreignIds:
+      type: object
+      properties:
+        drupalId:
+          type: string
+
+    highlanderPlayer:
+      type: object
+      additionalProperties: false
+      required: [id, slug, name, firstName, lastName, roleSlug, photoUrl, hometown, region,
+        birthdate, createdAt, updatedAt, bios, foreignIds, socialNetworks, champions]
+      properties:
+        id:
+          type: integer
+          description: The player ID
+        slug:
+          type: string
+          description: URL friendly version of the player's in game name
+        name:
+          type: string
+          description: The player's in game name
+        firstName:
+          type: string
+        LastName:
+          type: string
+          nullable: true
+        roleSlug:
+          type: string
+          description: The role they usually play
+        photoUrl:
+          type: string
+          nullable: true
+          description: URL to the player's photo
+        hometown:
+          type: string
+          nullable: true
+        region:
+          type: string
+        birthdate:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt: *createdAt
+        updatedAt: *updatedAt
+        bios:
+          type: object
+          description: |
+            Contains a description of the player translated to various languages.
+
+            The keys are presented in the format ([ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1)
+            and [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))
+
+            `{languageCode}_{countryCode}`
+
+            The value is a string containing
+            html tags representing the description in that specific locale.
+          additionalProperties:
+            type: string
+        foreignIds:
+          allOf:
+            - $ref: '#/components/schemas/foreignIds'
+            - type: object
+              description: |
+                'This object may contain keys which are the names of various tournament realms.
+
+                **Example:** `ESPORTSTMNT02: "200008392"`
+
+                The purpose of the value in those strings is unknown.'
+              additionalProperties:
+                type: string
+        socialNetworks:
+          type: object
+          description: |
+            Contains links to the player's social media accounts.
+
+            The key is the name of the social media platform and the value is the URL
+          additionalProperties:
+            type: string
+        champions:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, playerId, championId, championKey, championName, createdAt, updatedAt]
+            properties:
+              id:
+                type: integer
+              playerId:
+                type: integer
+                description: The player ID
+              championId:
+                type: integer
+                description: The champion ID
+              championKey:
+                type: string
+                description: The champion's name
+              championName:
+                type: string
+                description: The champion's name
+              createdAt: *createdAt
+              updatedAt: *updatedAt
+
+    highlanderTeams:
+      type: array
+      description: |
+        An array containing the teams that have participated in this league.
+      items:
+        $ref: '#/components/schemas/highlanderTeam'
+
+    highlanderPlayers:
+      type: array
+      items:
+        $ref: '#/components/schemas/highlanderPlayer'
+
+    baseScheduleItem:
+      type: object
+      additionalProperties: false
+      required: [id, scheduledTime, tags, tournament, league]
+      properties:
+        id:
+          description: The schedule item ID.
+          type: string
+        scheduledTime:
+          type: string
+          format: date-time
+          description: The time the match/event is/was scheduled to start.
+        tags:
+          $ref: '#/components/schemas/tags'
+        tournament:
+          type: string
+          pattern: *uuidRegex
+          description: The tournament ID
+        league:
+          type: string
+          description: The League ID
+
+    matchScheduleItem:
+      allOf:
+        - $ref: '#/components/schemas/baseScheduleItem'
+        - type: object
+          additionalProperties: false
+          required: [content, match, bracket]
+          properties:
+            content:
+              type: string
+              pattern: '^urn:rg:lolesports:global:highlander:tournament:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):match:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$'
+              description: |
+                Contains the tournament and match Ids for the specific match.
+            match:
+              type: string
+              pattern: *uuidRegex
+              description: The match ID
+            bracket:
+              type: string
+              pattern: *uuidRegex
+              description: The bracket ID
+
+    eventScheduleItem:
+      allOf:
+        - $ref: '#/components/schemas/baseScheduleItem'
+        - type: object
+          additionalProperties: false
+          required: [content]
+          properties:
+            content:
+              type: string
+              pattern: '^{\\"imageUrl\\":null,\\"label\\":\\"(?:rebroadcast|pt1|opening-ceremony|worlds-pre-show)\\"}$'
+
+    scheduleItem:
+      oneOf:
+        - $ref: '#/components/schemas/matchScheduleItem'
+        - $ref: '#/components/schemas/eventScheduleItem'
+
+    tags:
+      type: object
+      additionalProperties: false
+      required: [leagueLabel, tournamentLabel, blockLabel, subBlockLabel, subBlockPrefix]
+      description: |
+        The labels are used to describe the week and day the match/event is taking place in.
+        Also, it could indicate the stage of the tournament.
+
+        The blockPrefix comes before the block Label. Same with the subBlockPrefix and the subBlockLabel.
+      properties:
+        subBlockLabel:
+          type: string
+        blockLabel:
+          type: string
+        leagueLabel:
+          type: string
+          pattern: *leagueReference
+        blockPrefix:
+          type: string
+        subBlockPrefix:
+          type: string
+        yearLabel:
+          type: string
+        stageLabel:
+          type: string
+          pattern: '^urn:rg:lolesports:global:highlander:tournament:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}):bracket:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$'
+          description: |
+            Contains the tournament and bracket Ids the match/event belongs to.
+        tournamentLabel:
+          type: string
+          pattern: '^urn:rg:lolesports:global:highlander:tournament:(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$'
+          description: |
+            Contains the tournament ID.
+
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+  parameters:
+    hl:
+      name: hl
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/locale'
+
+    leagueIds:
+      name: leagueId
+      in: query
+      description: |
+        The id(s) of the league(s) you want details of
+      schema:
+        type: array
+        items:
+          type: integer
+          format: int64
+
+    leagueId:
+      name: leagueId
+      in: query
+      description: |
+        The id of the league you want details of
+      schema:
+        type: integer
+        format: int64
+
+    highlanderLeagueId:
+      name: leagueId
+      required: true
+      in: query
+      description: The id of the league you want details of
+      schema:
+        type: integer
+        format: int32
+
+    pageToken:
+      name: pageToken
+      in: query
+      description: *pagetoken
+      schema:
+        type: string
+        format: byte
+
+    tournamentIds:
+      name: tournamentId
+      in: query
+      description: |
+        The id(s) of the tournament(s) you want details ofs
+      schema:
+        type: array
+        items:
+          type: integer
+          format: int64
+
+    id:
+      name: id
+      in: query
+      required: true
+      description: |
+        The id of the match that you want
+      schema:
+        type: integer
+        format: int64
+
+    teamSlugs:
+      name: id
+      in: query
+      description: |
+        The team slug(s).
+
+        You can input more than one slug.
+      schema:
+        type: array
+        items:
+          type: string
+
+    gameIds:
+      name: id
+      in: query
+      description: |
+        The game Id(s).
+
+        You can input more than one game Id(s).
+      schema:
+        type: array
+        items:
+          type: integer
+          format: int64
+
+    pathGameId:
+      name: gameId
+      in: path
+      required: true
+      description: |
+        The game id of the match
+      schema:
+        type: integer
+        format: int64
+
+    startingTime:
+      name: startingTime
+      in: query
+      description: |
+        The date-time (RFC3339)
+      schema:
+        type: string
+        format: date-time
+
+    league:
+      name: league
+      in: query
+      required: true
+      description: The id of the league you want details of
+      schema:
+        type: string
+        format: int32
+
+    teamSlug:
+      name: slug
+      in: query
+      required: true
+      description: The team slug.
+      schema:
+        type: string
+
+    highlanderTournamentId:
+      name: tournament
+      in: query
+      required: true
+      description: The tournament ID.
+      schema:
+        type: string
+        pattern: *uuidRegex
+
+    playerSlug:
+      name: slug
+      in: query
+      required: true
+      description: The player slug.
+      schema:
+        type: string
