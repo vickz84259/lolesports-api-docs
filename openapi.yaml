@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
-  title: Lolesports Api
-  description: Unofficial documentation to the lolesports Api
+  title: Lolesports API
+  description: Unofficial documentation to the lolesports API
   version: "1.0.0-alpha-1"
 
 tags:
@@ -1135,7 +1135,8 @@ paths:
                                   type: integer
                                   description: Size of the image in bytes
                                 time:
-                                  type: float
+                                  type: number
+                                  format: float32
                             scheduleItems:
                               type: array
                               description: |
@@ -1727,7 +1728,7 @@ components:
                             - $ref: '#/components/schemas/result'
                             - type: object
                               additionalProperties: false
-                              required: outcome
+                              required: [outcome]
                               properties:
                                 outcome:
                                   $ref: '#/components/schemas/outcome'
@@ -2564,7 +2565,7 @@ components:
       properties:
         identifier:
           type: string
-          enum: [lol:duel, lol:classic]
+          enum: ['lol:duel', 'lol:classic']
         requiredPlayers:
           type: integer
           enum: [1, 5]
